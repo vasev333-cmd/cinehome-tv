@@ -23,19 +23,23 @@ jobs:
         with:
           gradle-version: '8.6'
 
-      - name: Prepare Android Project
+      - name: Prepare Clean Android Project
         run: |
           rm -rf build-app
           mkdir -p build-app/app/src/main/java/com/cinehome/tv
           mkdir -p build-app/app/src/main/assets
           mkdir -p build-app/app/src/main/res/drawable
-          mkdir -p build-app/app/src/main/res/values
 
-          # Вграждане на интерфейса вътре в самото приложение
+          # Вграждане на вашия интерфейс вътре в приложението
           cp index.html build-app/app/src/main/assets/index.html
 
-          # settings.gradle.kts
-          cat << 'EOF' > build-app/settings.gradle.kts
+          # Приемане на Android лицензи и път до SDK
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+          echo "sdk.dir=$ANDROID_HOME" > build-app/local.properties
+          echo "android.useAndroidX=true" > build-app/gradle.properties
+
+          # settings.gradle
+          cat << 'EOF' > build-app/settings.gradle
           pluginManagement {
               repositories {
                   google()
@@ -44,67 +48,57 @@ jobs:
               }
           }
           dependencyResolutionManagement {
-              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
               repositories {
                   google()
                   mavenCentral()
               }
           }
-          rootProject.name = "CineHomeTV"
-          include(":app")
+          rootProject.name = 'CineHomeTV'
+          include ':app'
           EOF
 
-          # root build.gradle.kts
-          cat << 'EOF' > build-app/build.gradle.kts
+          # root build.gradle
+          cat << 'EOF' > build-app/build.gradle
           plugins {
-              id("com.android.application") version "8.2.2" apply false
-              id("org.jetbrains.kotlin.android") version "1.9.22" apply false
+              id 'com.android.application' version '8.2.2' apply false
           }
           EOF
 
-          # app/build.gradle.kts
-          cat << 'EOF' > build-app/app/build.gradle.kts
+          # app/build.gradle
+          cat << 'EOF' > build-app/app/build.gradle
           plugins {
-              id("com.android.application")
-              id("org.jetbrains.kotlin.android")
+              id 'com.android.application'
           }
 
           android {
-              namespace = "com.cinehome.tv"
-              compileSdk = 34
+              namespace 'com.cinehome.tv'
+              compileSdk 34
 
               defaultConfig {
-                  applicationId = "com.cinehome.tv"
-                  minSdk = 21
-                  targetSdk = 34
-                  versionCode = 1
-                  versionName = "1.0"
+                  applicationId 'com.cinehome.tv'
+                  minSdk 21
+                  targetSdk 34
+                  versionCode 1
+                  versionName '1.0'
               }
 
               buildTypes {
                   release {
-                      isMinifyEnabled = false
+                      minifyEnabled false
                   }
                   debug {
-                      isMinifyEnabled = false
+                      minifyEnabled false
                   }
               }
-              compileOptions {
-                  sourceCompatibility = JavaVersion.VERSION_1_8
-                  targetCompatibility = JavaVersion.VERSION_1_8
-              }
-              kotlinOptions {
-                  jvmTarget = "1.8"
-              }
-          }
 
-          dependencies {
-              implementation("androidx.core:core-ktx:1.12.0")
-              implementation("androidx.appcompat:appcompat:1.6.1")
+              compileOptions {
+                  sourceCompatibility JavaVersion.VERSION_1_8
+                  targetCompatibility JavaVersion.VERSION_1_8
+              }
           }
           EOF
 
-          # AndroidManifest.xml със специален LEANBACK_LAUNCHER за началния екран на телевизора
+          # AndroidManifest.xml (специално за начален екран на Android TV)
           cat << 'EOF' > build-app/app/src/main/AndroidManifest.xml
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android"
@@ -139,7 +133,7 @@ jobs:
           </manifest>
           EOF
 
-          # ТВ Банер (иконата, която ще се вижда на началния екран на телевизора)
+          # tv_banner.xml (икона за началния екран на TCL)
           cat << 'EOF' > build-app/app/src/main/res/drawable/tv_banner.xml
           <?xml version="1.0" encoding="utf-8"?>
           <shape xmlns:android="http://schemas.android.com/apk/res/android"
@@ -152,74 +146,60 @@ jobs:
           </shape>
           EOF
 
-          # strings.xml
-          cat << 'EOF' > build-app/app/src/main/res/values/strings.xml
-          <resources>
-              <string name="app_name">CineHome TV</string>
-          </resources>
-          EOF
+          # MainActivity.java (директно управление с дистанционното)
+          cat << 'EOF' > build-app/app/src/main/java/com/cinehome/tv/MainActivity.java
+          package com.cinehome.tv;
 
-          # MainActivity.kt
-          cat << 'EOF' > build-app/app/src/main/java/com/cinehome/tv/MainActivity.kt
-          package com.cinehome.tv
+          import android.app.Activity;
+          import android.os.Bundle;
+          import android.view.KeyEvent;
+          import android.view.View;
+          import android.webkit.WebSettings;
+          import android.webkit.WebView;
+          import android.webkit.WebViewClient;
 
-          import android.annotation.SuppressLint
-          import android.os.Bundle
-          import android.view.KeyEvent
-          import android.view.View
-          import android.webkit.WebView
-          import android.webkit.WebViewClient
-          import androidx.fragment.app.FragmentActivity
+          public class MainActivity extends Activity {
+              private WebView webView;
 
-          class MainActivity : FragmentActivity() {
-              private lateinit var webView: WebView
-
-              @SuppressLint("SetJavaScriptEnabled")
-              override fun onCreate(savedInstanceState: Bundle?) {
-                  super.onCreate(savedInstanceState)
-
-                  window.decorView.systemUiVisibility = (
-                      View.SYSTEM_UI_FLAG_FULLSCREEN or
-                      View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
+              @Override
+              protected void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+                  getWindow().getDecorView().setSystemUiVisibility(
+                      View.SYSTEM_UI_FLAG_FULLSCREEN |
+                      View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
                       View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                  )
+                  );
 
-                  webView = WebView(this)
-                  setContentView(webView)
+                  webView = new WebView(this);
+                  setContentView(webView);
 
-                  with(webView.settings) {
-                      javaScriptEnabled = true
-                      domStorageEnabled = true
-                      databaseEnabled = true
-                      mediaPlaybackRequiresUserGesture = false
-                      allowFileAccess = true
-                      allowContentAccess = true
-                  }
+                  WebSettings s = webView.getSettings();
+                  s.setJavaScriptEnabled(true);
+                  s.setDomStorageEnabled(true);
+                  s.setDatabaseEnabled(true);
+                  s.setAllowFileAccess(true);
+                  s.setAllowContentAccess(true);
+                  s.setMediaPlaybackRequiresUserGesture(false);
 
-                  webView.setLayerType(View.LAYER_TYPE_HARDWARE, null)
-                  webView.webViewClient = WebViewClient()
-                  webView.loadUrl("file:///android_asset/index.html")
+                  webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+                  webView.setWebViewClient(new WebViewClient());
+                  webView.loadUrl("file:///android_asset/index.html");
               }
 
-              override fun dispatchKeyEvent(event: KeyEvent): Boolean {
-                  if (event.action == KeyEvent.ACTION_DOWN) {
-                      when (event.keyCode) {
-                          KeyEvent.KEYCODE_DPAD_UP,
-                          KeyEvent.KEYCODE_DPAD_DOWN,
-                          KeyEvent.KEYCODE_DPAD_LEFT,
-                          KeyEvent.KEYCODE_DPAD_RIGHT,
-                          KeyEvent.KEYCODE_DPAD_CENTER,
-                          KeyEvent.KEYCODE_ENTER -> {
-                              webView.dispatchKeyEvent(event)
-                              return true
-                          }
-                          KeyEvent.KEYCODE_BACK -> {
-                              webView.evaluateJavascript("window.dispatchEvent(new KeyboardEvent('keydown', {'key': 'Escape'}));", null)
-                              return true
-                          }
+              @Override
+              public boolean dispatchKeyEvent(KeyEvent event) {
+                  if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                      int code = event.getKeyCode();
+                      if (code == KeyEvent.KEYCODE_DPAD_UP || code == KeyEvent.KEYCODE_DPAD_DOWN ||
+                          code == KeyEvent.KEYCODE_DPAD_LEFT || code == KeyEvent.KEYCODE_DPAD_RIGHT ||
+                          code == KeyEvent.KEYCODE_DPAD_CENTER || code == KeyEvent.KEYCODE_ENTER) {
+                          return webView.dispatchKeyEvent(event);
+                      } else if (code == KeyEvent.KEYCODE_BACK) {
+                          webView.evaluateJavascript("window.dispatchEvent(new KeyboardEvent('keydown', {'key': 'Escape'}));", null);
+                          return true;
                       }
                   }
-                  return super.dispatchKeyEvent(event)
+                  return super.dispatchKeyEvent(event);
               }
           }
           EOF
@@ -227,7 +207,7 @@ jobs:
       - name: Compile CineHome TV APK
         run: |
           cd build-app
-          gradle assembleDebug
+          gradle assembleDebug --stacktrace
 
       - name: Upload CineHome TV APK
         uses: actions/upload-artifact@v4
