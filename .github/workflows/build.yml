@@ -1,4 +1,4 @@
-name: Build Android TV APK
+name: Build CineHome Android TV App
 
 on:
   push:
@@ -20,14 +20,217 @@ jobs:
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '8.6'
 
-      - name: Build Android TV APK
+      - name: Prepare Android Project
         run: |
-          cd android-tv-wrapper
+          rm -rf build-app
+          mkdir -p build-app/app/src/main/java/com/cinehome/tv
+          mkdir -p build-app/app/src/main/assets
+          mkdir -p build-app/app/src/main/res/drawable
+          mkdir -p build-app/app/src/main/res/values
+
+          # Вграждане на интерфейса вътре в самото приложение
+          cp index.html build-app/app/src/main/assets/index.html
+
+          # settings.gradle.kts
+          cat << 'EOF' > build-app/settings.gradle.kts
+          pluginManagement {
+              repositories {
+                  google()
+                  mavenCentral()
+                  gradlePluginPortal()
+              }
+          }
+          dependencyResolutionManagement {
+              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+          }
+          rootProject.name = "CineHomeTV"
+          include(":app")
+          EOF
+
+          # root build.gradle.kts
+          cat << 'EOF' > build-app/build.gradle.kts
+          plugins {
+              id("com.android.application") version "8.2.2" apply false
+              id("org.jetbrains.kotlin.android") version "1.9.22" apply false
+          }
+          EOF
+
+          # app/build.gradle.kts
+          cat << 'EOF' > build-app/app/build.gradle.kts
+          plugins {
+              id("com.android.application")
+              id("org.jetbrains.kotlin.android")
+          }
+
+          android {
+              namespace = "com.cinehome.tv"
+              compileSdk = 34
+
+              defaultConfig {
+                  applicationId = "com.cinehome.tv"
+                  minSdk = 21
+                  targetSdk = 34
+                  versionCode = 1
+                  versionName = "1.0"
+              }
+
+              buildTypes {
+                  release {
+                      isMinifyEnabled = false
+                  }
+                  debug {
+                      isMinifyEnabled = false
+                  }
+              }
+              compileOptions {
+                  sourceCompatibility = JavaVersion.VERSION_1_8
+                  targetCompatibility = JavaVersion.VERSION_1_8
+              }
+              kotlinOptions {
+                  jvmTarget = "1.8"
+              }
+          }
+
+          dependencies {
+              implementation("androidx.core:core-ktx:1.12.0")
+              implementation("androidx.appcompat:appcompat:1.6.1")
+          }
+          EOF
+
+          # AndroidManifest.xml със специален LEANBACK_LAUNCHER за началния екран на телевизора
+          cat << 'EOF' > build-app/app/src/main/AndroidManifest.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+              package="com.cinehome.tv">
+
+              <uses-permission android:name="android.permission.INTERNET" />
+              <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+              <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
+
+              <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+              <uses-feature android:name="android.software.leanback" android:required="false" />
+
+              <application
+                  android:label="CineHome TV"
+                  android:banner="@drawable/tv_banner"
+                  android:icon="@drawable/tv_banner"
+                  android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
+                  android:hardwareAccelerated="true">
+
+                  <activity
+                      android:name=".MainActivity"
+                      android:exported="true"
+                      android:screenOrientation="landscape"
+                      android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenSize">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                      </intent-filter>
+                  </activity>
+              </application>
+          </manifest>
+          EOF
+
+          # ТВ Банер (иконата, която ще се вижда на началния екран на телевизора)
+          cat << 'EOF' > build-app/app/src/main/res/drawable/tv_banner.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <shape xmlns:android="http://schemas.android.com/apk/res/android"
+              android:shape="rectangle">
+              <gradient
+                  android:angle="45"
+                  android:startColor="#1e1b4b"
+                  android:endColor="#8b5cf6" />
+              <corners android:radius="16dp" />
+          </shape>
+          EOF
+
+          # strings.xml
+          cat << 'EOF' > build-app/app/src/main/res/values/strings.xml
+          <resources>
+              <string name="app_name">CineHome TV</string>
+          </resources>
+          EOF
+
+          # MainActivity.kt
+          cat << 'EOF' > build-app/app/src/main/java/com/cinehome/tv/MainActivity.kt
+          package com.cinehome.tv
+
+          import android.annotation.SuppressLint
+          import android.os.Bundle
+          import android.view.KeyEvent
+          import android.view.View
+          import android.webkit.WebView
+          import android.webkit.WebViewClient
+          import androidx.fragment.app.FragmentActivity
+
+          class MainActivity : FragmentActivity() {
+              private lateinit var webView: WebView
+
+              @SuppressLint("SetJavaScriptEnabled")
+              override fun onCreate(savedInstanceState: Bundle?) {
+                  super.onCreate(savedInstanceState)
+
+                  window.decorView.systemUiVisibility = (
+                      View.SYSTEM_UI_FLAG_FULLSCREEN or
+                      View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
+                      View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                  )
+
+                  webView = WebView(this)
+                  setContentView(webView)
+
+                  with(webView.settings) {
+                      javaScriptEnabled = true
+                      domStorageEnabled = true
+                      databaseEnabled = true
+                      mediaPlaybackRequiresUserGesture = false
+                      allowFileAccess = true
+                      allowContentAccess = true
+                  }
+
+                  webView.setLayerType(View.LAYER_TYPE_HARDWARE, null)
+                  webView.webViewClient = WebViewClient()
+                  webView.loadUrl("file:///android_asset/index.html")
+              }
+
+              override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+                  if (event.action == KeyEvent.ACTION_DOWN) {
+                      when (event.keyCode) {
+                          KeyEvent.KEYCODE_DPAD_UP,
+                          KeyEvent.KEYCODE_DPAD_DOWN,
+                          KeyEvent.KEYCODE_DPAD_LEFT,
+                          KeyEvent.KEYCODE_DPAD_RIGHT,
+                          KeyEvent.KEYCODE_DPAD_CENTER,
+                          KeyEvent.KEYCODE_ENTER -> {
+                              webView.dispatchKeyEvent(event)
+                              return true
+                          }
+                          KeyEvent.KEYCODE_BACK -> {
+                              webView.evaluateJavascript("window.dispatchEvent(new KeyboardEvent('keydown', {'key': 'Escape'}));", null)
+                              return true
+                          }
+                      }
+                  }
+                  return super.dispatchKeyEvent(event)
+              }
+          }
+          EOF
+
+      - name: Compile CineHome TV APK
+        run: |
+          cd build-app
           gradle assembleDebug
 
       - name: Upload CineHome TV APK
         uses: actions/upload-artifact@v4
         with:
           name: CineHome-TCL-TV
-          path: android-tv-wrapper/app/build/outputs/apk/debug/*.apk
+          path: build-app/app/build/outputs/apk/debug/*.apk
