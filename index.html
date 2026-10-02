@@ -4,243 +4,690 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CineHome TV</title>
-  <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
-    * { font-family: 'Plus Jakarta Sans', sans-serif; user-select: none; }
-    .no-scrollbar::-webkit-scrollbar { display: none; }
-    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    :root {
+      --bg-dark: #06070a;
+      --card-bg: #0f111a;
+      --card-border: rgba(255, 255, 255, 0.12);
+      --accent-purple: #9333ea;
+      --accent-glow: rgba(168, 85, 247, 0.7);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      overflow-x: hidden;
+      min-height: 100vh;
+      display: flex;
+    }
+
+    ::-webkit-scrollbar { display: none; }
+    * { -ms-overflow-style: none; scrollbar-width: none; }
 
     .tv-focusable {
-      transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.2s ease, border-color 0.2s ease;
       outline: none !important;
+      position: relative;
+      transition: transform 0.18s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.18s ease, outline 0.18s ease, border-color 0.18s ease;
+      cursor: pointer;
     }
 
     .tv-focusable.focused {
-      transform: scale(1.08) translateY(-4px);
-      box-shadow: 0 0 0 3.5px #ffffff, 0 16px 36px rgba(168, 85, 247, 0.6) !important;
+      transform: scale(1.08) translateY(-4px) !important;
+      outline: 4px solid #ffffff !important;
+      box-shadow: 0 0 35px var(--accent-glow), 0 0 12px #ffffff !important;
+      z-index: 60 !important;
       border-color: #ffffff !important;
-      z-index: 50 !important;
     }
 
     .tv-btn.focused {
-      transform: scale(1.06);
-      box-shadow: 0 0 0 3px #ffffff, 0 8px 24px rgba(168, 85, 247, 0.7) !important;
+      transform: scale(1.08) !important;
+      outline: 3.5px solid #ffffff !important;
+      box-shadow: 0 0 28px rgba(168, 85, 247, 0.9), 0 0 10px #ffffff !important;
       background: linear-gradient(135deg, #a855f7, #ec4899) !important;
       color: #ffffff !important;
     }
 
     .tv-sidebar-item.focused {
-      background-color: rgba(168, 85, 247, 0.4) !important;
-      border-color: #c084fc !important;
+      transform: translateX(8px) scale(1.05) !important;
+      outline: 3px solid #ffffff !important;
+      background: rgba(168, 85, 247, 0.45) !important;
       color: #ffffff !important;
-      transform: translateX(6px);
-      box-shadow: 0 0 0 2px #ffffff !important;
+      box-shadow: 0 0 20px rgba(168, 85, 247, 0.8) !important;
     }
 
     .genre-chip.focused {
+      transform: scale(1.12) !important;
+      outline: 3px solid #ffffff !important;
       background: linear-gradient(135deg, #9333ea, #ec4899) !important;
       color: #ffffff !important;
-      transform: scale(1.08);
-      box-shadow: 0 0 0 2.5px #ffffff, 0 8px 20px rgba(236, 72, 153, 0.5) !important;
+      box-shadow: 0 0 22px rgba(236, 72, 153, 0.8) !important;
     }
 
-    .rank-number {
-      font-size: 7.5rem;
+    #sidebar {
+      position: fixed;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 78px;
+      z-index: 50;
+      background: rgba(8, 9, 14, 0.94);
+      border-right: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 24px 12px;
+      transition: width 0.25s ease;
+    }
+
+    #sidebar.expanded, #sidebar:hover { width: 240px; }
+
+    .brand-logo {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #9333ea, #ec4899, #6366f1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-weight: 900;
-      line-height: 0.8;
-      background: linear-gradient(180deg, #ffffff 20%, #475569 80%);
+      font-size: 24px;
+      color: #fff;
+      box-shadow: 0 8px 24px rgba(147, 51, 234, 0.5);
+      flex-shrink: 0;
+    }
+
+    .brand-text { margin-left: 14px; display: none; white-space: nowrap; }
+    #sidebar.expanded .brand-text, #sidebar:hover .brand-text { display: block; }
+
+    .brand-title {
+      font-weight: 900;
+      font-size: 18px;
+      letter-spacing: -0.5px;
+      background: linear-gradient(90deg, #fff, #c084fc, #f472b6);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      -webkit-text-stroke: 2px #64748b;
-      filter: drop-shadow(4px 4px 12px rgba(0,0,0,0.9));
     }
+
+    .brand-sub { font-size: 10px; font-weight: 800; color: #c084fc; letter-spacing: 2px; }
+
+    .nav-list { display: flex; flex-direction: column; gap: 12px; margin-top: 24px; }
+
+    .tv-sidebar-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: transparent;
+      border: 1px solid transparent;
+      color: #cbd5e1;
+      text-decoration: none;
+      width: 100%;
+    }
+
+    .tv-sidebar-item .icon { font-size: 22px; flex-shrink: 0; }
+    .tv-sidebar-item .label { margin-left: 14px; font-size: 14px; font-weight: 700; white-space: nowrap; display: none; }
+    #sidebar.expanded .tv-sidebar-item .label, #sidebar:hover .tv-sidebar-item .label { display: block; }
+
+    #main-wrapper { margin-left: 78px; flex: 1; min-width: 0; position: relative; }
+
+    #ambient-glow {
+      position: fixed;
+      top: 0;
+      left: 78px;
+      right: 0;
+      height: 520px;
+      opacity: 0.45;
+      pointer-events: none;
+      filter: blur(140px);
+      background: radial-gradient(circle at 40% 20%, #7e22ce, #1e1b4b, transparent 70%);
+      z-index: 1;
+    }
+
+    header {
+      position: relative;
+      z-index: 20;
+      padding: 24px 44px 10px 44px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      background: linear-gradient(180deg, rgba(6, 7, 10, 0.95) 0%, rgba(6, 7, 10, 0.6) 70%, transparent 100%);
+    }
+
+    .header-top { display: flex; align-items: center; justify-content: space-between; }
+    .status-badges { display: flex; align-items: center; gap: 12px; }
+
+    .badge {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 5px 12px;
+      border-radius: 9999px;
+    }
+
+    .badge-usb { background: rgba(88, 28, 135, 0.7); border: 1px solid rgba(168, 85, 247, 0.4); color: #e9d5ff; }
+    .badge-spec { background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15); color: #94a3b8; }
+
+    #clock {
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      padding: 5px 14px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #f1f5f9;
+    }
+
+    .genre-chips-row { display: flex; align-items: center; gap: 12px; overflow-x: auto; padding: 4px 0; }
+
+    .genre-chip {
+      padding: 8px 18px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.07);
+      color: #cbd5e1;
+      flex-shrink: 0;
+    }
+
+    .genre-chip.active { background: #7e22ce; color: #ffffff; border-color: #a855f7; }
+
+    #hero {
+      position: relative;
+      z-index: 10;
+      padding: 10px 44px 44px 44px;
+      min-height: 420px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+
+    .hero-bg-container { position: absolute; top: -120px; left: 0; right: 0; bottom: 0; overflow: hidden; z-index: -1; }
+    #hero-backdrop {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.38;
+      transition: opacity 0.4s ease, transform 0.6s ease;
+      transform: scale(1.02);
+    }
+
+    .hero-vignette {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 75% 30%, transparent 20%, rgba(6, 7, 10, 0.8) 70%, #06070a 95%),
+                  linear-gradient(0deg, #06070a 0%, rgba(6, 7, 10, 0.6) 50%, transparent 100%),
+                  linear-gradient(90deg, #06070a 0%, rgba(6, 7, 10, 0.5) 45%, transparent 100%);
+    }
+
+    .hero-content { max-width: 680px; display: flex; flex-direction: column; gap: 14px; }
+    .hero-tags { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+    .tag-category { background: #9333ea; color: #fff; padding: 4px 10px; border-radius: 6px; }
+    .tag-quality { background: rgba(255, 255, 255, 0.12); color: #e2e8f0; padding: 3px 8px; border-radius: 5px; }
+    .tag-audio { background: rgba(245, 158, 11, 0.2); color: #fcd34d; padding: 3px 8px; border-radius: 5px; }
+
+    #hero-title { font-size: 52px; font-weight: 900; letter-spacing: -1.5px; line-height: 1.05; text-shadow: 0 4px 20px rgba(0, 0, 0, 0.9); }
+    #hero-description {
+      font-size: 15px;
+      line-height: 1.55;
+      color: #cbd5e1;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+    }
+
+    .hero-actions { display: flex; align-items: center; gap: 16px; padding-top: 8px; }
+
+    .btn-play {
+      padding: 14px 32px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #9333ea, #6366f1);
+      color: #ffffff;
+      font-weight: 900;
+      font-size: 15px;
+      border: none;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 8px 24px rgba(147, 51, 234, 0.5);
+    }
+
+    .btn-secondary {
+      padding: 14px 24px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      color: #ffffff;
+      font-weight: 800;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .hero-rating-box {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 16px;
+      border-radius: 14px;
+      background: rgba(0, 0, 0, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .star { color: #f59e0b; font-size: 16px; }
+
+    main {
+      padding: 0 44px 90px 44px;
+      display: flex;
+      flex-direction: column;
+      gap: 44px;
+      position: relative;
+      z-index: 10;
+    }
+
+    .section-title {
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .section-bar { width: 5px; height: 22px; border-radius: 4px; background: linear-gradient(180deg, #a855f7, #ec4899); }
+    .rail { display: flex; align-items: center; gap: 20px; overflow-x: auto; padding: 12px 6px 16px 6px; }
+
+    .top10-card { flex-shrink: 0; display: flex; align-items: center; border-radius: 20px; }
+    .rank-number {
+      font-size: 120px;
+      font-weight: 900;
+      line-height: 0.75;
+      margin-right: -32px;
+      z-index: 10;
+      background: linear-gradient(180deg, #ffffff 15%, #334155 85%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      -webkit-text-stroke: 3px #64748b;
+      filter: drop-shadow(4px 4px 10px rgba(0,0,0,0.9));
+    }
+
+    .poster-box {
+      width: 175px;
+      aspect-ratio: 2 / 3;
+      border-radius: 18px;
+      overflow: hidden;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      position: relative;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.7);
+    }
+
+    .poster-box img { width: 100%; height: 100%; object-fit: cover; }
+
+    .card-rating-badge {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      padding: 3px 7px;
+      border-radius: 6px;
+      background: rgba(0, 0, 0, 0.85);
+      font-size: 10px;
+      font-weight: 900;
+      color: #fbbf24;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .card-quality-badge {
+      position: absolute;
+      bottom: 8px;
+      left: 8px;
+      padding: 3px 7px;
+      border-radius: 6px;
+      background: rgba(88, 28, 135, 0.9);
+      border: 1px solid rgba(168, 85, 247, 0.5);
+      font-size: 9px;
+      font-weight: 900;
+      color: #e9d5ff;
+    }
+
+    .movie-card {
+      flex-shrink: 0;
+      width: 175px;
+      border-radius: 18px;
+      overflow: hidden;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.6);
+    }
+
+    .card-info { padding: 10px 12px 12px 12px; display: flex; flex-direction: column; gap: 3px; }
+    .card-title { font-size: 13px; font-weight: 800; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-meta { font-size: 11px; color: #a855f7; font-weight: 700; }
+
+    .categories-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; padding: 6px 0; }
+
+    .category-hub-card {
+      padding: 24px 20px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, rgba(30, 27, 75, 0.6), rgba(15, 23, 42, 0.8));
+      border: 1px solid rgba(129, 140, 248, 0.25);
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .category-icon { font-size: 32px; }
+    .category-name { font-size: 15px; font-weight: 900; color: #ffffff; letter-spacing: 0.5px; }
+
+    #player-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: #000000;
+      display: none;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 32px 48px;
+    }
+
+    #player-modal.open { display: flex; }
+    .player-header { display: flex; align-items: center; justify-content: space-between; }
+    #player-video { width: 100%; height: 100%; max-height: 72vh; border-radius: 18px; background: #000; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.9); }
+    .player-controls { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid rgba(255, 255, 255, 0.15); padding-top: 18px; }
+    .player-buttons { display: flex; align-items: center; gap: 16px; }
+
+    #tv-hud {
+      position: fixed;
+      bottom: 16px;
+      right: 24px;
+      z-index: 80;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(12px);
+      padding: 6px 14px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 800;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+      transition: background-color 0.2s ease, border-color 0.2s ease;
+    }
+
+    #tv-hud.active-flash { background: rgba(147, 51, 234, 0.9); border-color: #ffffff; color: #ffffff; }
   </style>
 </head>
-<body class="bg-[#06070a] text-slate-100 overflow-x-hidden min-h-screen flex">
-  <div id="ambient-glow" class="fixed top-0 left-0 right-0 h-[500px] opacity-40 pointer-events-none transition-all duration-700 blur-[130px] bg-gradient-to-b from-purple-800 via-indigo-950 to-transparent"></div>
+<body>
 
-  <!-- Left Sidebar -->
-  <aside id="sidebar" class="fixed left-0 top-0 bottom-0 z-50 w-20 hover:w-64 transition-all duration-300 bg-black/90 backdrop-blur-2xl border-r border-white/10 flex flex-col justify-between py-6 px-3 group">
-    <div class="space-y-6">
-      <div class="flex items-center space-x-3 px-2">
-        <div class="w-11 h-11 rounded-xl bg-gradient-to-tr from-purple-600 via-pink-500 to-indigo-500 flex items-center justify-center font-black text-2xl text-white shadow-lg shadow-purple-600/50 flex-shrink-0">C</div>
-        <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap overflow-hidden">
-          <div class="font-black text-lg tracking-tight bg-gradient-to-r from-white via-purple-200 to-pink-300 bg-clip-text text-transparent">CINEHOME <span class="text-purple-400">MAX</span></div>
-          <div class="text-[10px] text-purple-400 font-bold uppercase tracking-widest">TCL EDITION</div>
+  <div id="ambient-glow"></div>
+
+  <aside id="sidebar">
+    <div>
+      <div style="display: flex; align-items: center;">
+        <div class="brand-logo">C</div>
+        <div class="brand-text">
+          <div class="brand-title">CINEHOME <span style="color:#c084fc;">MAX</span></div>
+          <div class="brand-sub">TCL TV EDITION</div>
         </div>
       </div>
-      <nav class="space-y-2 pt-4">
-        <button class="tv-focusable tv-sidebar-item w-full flex items-center space-x-4 px-3 py-3 rounded-xl text-slate-300 hover:text-white" onclick="filterByGenre('Всички')">
-          <span class="text-xl flex-shrink-0">🏠</span>
-          <span class="text-sm font-semibold opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Начало</span>
+
+      <nav class="nav-list">
+        <button id="nav-home" class="tv-focusable tv-sidebar-item" onclick="onSidebarClick('home')">
+          <span class="icon">🏠</span>
+          <span class="label">Начало</span>
         </button>
-        <button class="tv-focusable tv-sidebar-item w-full flex items-center space-x-4 px-3 py-3 rounded-xl text-slate-300 hover:text-white" onclick="scrollToSection('categories-hub')">
-          <span class="text-xl flex-shrink-0">🎭</span>
-          <span class="text-sm font-semibold opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Категории & Жанрове</span>
+
+        <button id="nav-top10" class="tv-focusable tv-sidebar-item" onclick="onSidebarClick('top10')">
+          <span class="icon">🔥</span>
+          <span class="label">Топ 10 Хита</span>
         </button>
-        <button class="tv-focusable tv-sidebar-item w-full flex items-center space-x-4 px-3 py-3 rounded-xl text-slate-300 hover:text-white" onclick="scrollToSection('top10-section')">
-          <span class="text-xl flex-shrink-0">🔥</span>
-          <span class="text-sm font-semibold opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Топ 10 Хита</span>
+
+        <button id="nav-categories" class="tv-focusable tv-sidebar-item" onclick="onSidebarClick('categories')">
+          <span class="icon">🎭</span>
+          <span class="label">Категории</span>
+        </button>
+
+        <button id="nav-usb" class="tv-focusable tv-sidebar-item" onclick="onSidebarClick('usb')">
+          <span class="icon">📁</span>
+          <span class="label">USB Флашка</span>
         </button>
       </nav>
     </div>
+
+    <div style="font-size: 10px; color: #64748b; font-weight: 700;">
+      v1.2 TCL
+    </div>
   </aside>
 
-  <!-- Main Content -->
-  <div class="flex-1 ml-20 min-w-0">
-    <header class="relative z-30 px-10 py-5 bg-gradient-to-b from-black/90 via-black/50 to-transparent flex flex-col space-y-4">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center space-x-3">
-          <span class="text-xs font-bold uppercase tracking-wider text-purple-400 bg-purple-950/70 border border-purple-500/30 px-3 py-1 rounded-full">📁 USB Памет • Свързана</span>
-          <span class="text-xs text-slate-400 bg-white/5 border border-white/10 px-3 py-1 rounded-full">4K Remux HEVC • Dolby Atmos</span>
+  <div id="main-wrapper">
+
+    <header>
+      <div class="header-top">
+        <div class="status-badges">
+          <span class="badge badge-usb">📁 USB Памет • Готова</span>
+          <span class="badge badge-spec">4K UHD Remux • HDR10 • Dolby Atmos</span>
         </div>
-        <div id="clock" class="text-slate-200 text-sm font-bold tracking-widest bg-white/10 px-3 py-1 rounded-lg border border-white/10">12:00</div>
+        <div id="clock">12:00</div>
       </div>
-      <div class="flex items-center space-x-2.5 overflow-x-auto no-scrollbar py-1">
-        <button class="genre-chip tv-focusable focused px-4 py-2 rounded-xl text-xs font-bold uppercase bg-purple-600 text-white flex-shrink-0" onclick="filterByGenre('Всички')">🌟 Всички Категории</button>
-        <button class="genre-chip tv-focusable px-4 py-2 rounded-xl text-xs font-bold uppercase bg-white/10 text-slate-300 flex-shrink-0" onclick="filterByGenre('Екшън')">💥 Екшън & Бойни</button>
-        <button class="genre-chip tv-focusable px-4 py-2 rounded-xl text-xs font-bold uppercase bg-white/10 text-slate-300 flex-shrink-0" onclick="filterByGenre('Фантастика')">🚀 Научна Фантастика</button>
-        <button class="genre-chip tv-focusable px-4 py-2 rounded-xl text-xs font-bold uppercase bg-white/10 text-slate-300 flex-shrink-0" onclick="filterByGenre('Трилър')">🕵️ Трилъри & Мистерии</button>
-        <button class="genre-chip tv-focusable px-4 py-2 rounded-xl text-xs font-bold uppercase bg-white/10 text-slate-300 flex-shrink-0" onclick="filterByGenre('Драма')">🎭 Драма & История</button>
+
+      <div id="genre-chips" class="genre-chips-row">
+        <button class="genre-chip tv-focusable active" onclick="selectGenre('all')">🌟 Всички Категории</button>
+        <button class="genre-chip tv-focusable" onclick="selectGenre('scifi')">🚀 Научна Фантастика</button>
+        <button class="genre-chip tv-focusable" onclick="selectGenre('action')">💥 Екшън & Бойни</button>
+        <button class="genre-chip tv-focusable" onclick="selectGenre('thriller')">🕵️ Трилъри & Драми</button>
+        <button class="genre-chip tv-focusable" onclick="selectGenre('4k')">✨ 4K UHD Remux</button>
+        <button class="genre-chip tv-focusable" onclick="selectGenre('usb')">📁 USB Файлове</button>
       </div>
     </header>
 
-    <!-- Hero Billboard -->
-    <section class="relative px-10 pt-2 pb-10 z-20 min-h-[420px] flex flex-col justify-end">
-      <div class="absolute inset-0 -top-28 -z-10 overflow-hidden">
-        <img id="hero-backdrop" src="https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=1600&q=80" alt="Backdrop" class="w-full h-full object-cover opacity-35 scale-105 transition-all duration-500">
-        <div class="absolute inset-0 bg-gradient-to-t from-[#06070a] via-[#06070a]/70 to-transparent"></div>
-        <div class="absolute inset-0 bg-gradient-to-r from-[#06070a] via-[#06070a]/60 to-transparent"></div>
+    <section id="hero">
+      <div class="hero-bg-container">
+        <img id="hero-backdrop" src="https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=1600&q=80" alt="Backdrop">
+        <div class="hero-vignette"></div>
       </div>
-      <div class="max-w-2xl space-y-3.5">
-        <div class="flex items-center space-x-2 text-xs font-bold uppercase tracking-wider">
-          <span id="hero-genre-badge" class="px-2.5 py-1 rounded-md bg-purple-600 text-white font-black text-[11px]">Научна Фантастика</span>
-          <span class="px-2 py-0.5 rounded bg-white/10 text-slate-300" id="hero-quality">4K REMUX</span>
-          <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold">ATMOS 7.1</span>
-          <span class="text-slate-400 font-semibold" id="hero-duration">2ч 46м</span>
+
+      <div class="hero-content">
+        <div class="hero-tags">
+          <span id="hero-genre-badge" class="tag-category">Научна Фантастика</span>
+          <span id="hero-quality" class="tag-quality">4K REMUX</span>
+          <span class="tag-audio">ATMOS 7.1</span>
+          <span id="hero-year" style="color: #94a3b8;">2024</span>
+          <span style="color: #64748b;">•</span>
+          <span id="hero-duration" style="color: #94a3b8;">2ч 46м</span>
         </div>
-        <h1 id="hero-title" class="text-4xl lg:text-6xl font-black text-white tracking-tight drop-shadow-xl leading-none">Дюн: Част Втора</h1>
-        <p id="hero-description" class="text-slate-300 text-sm leading-relaxed line-clamp-3">Пол Атреидски се обединява с Чани и свободните пустинни хора от Аракис...</p>
-        <div class="flex items-center space-x-4 pt-2">
-          <button id="btn-hero-play" onclick="playActiveMovie()" class="tv-btn tv-focusable px-7 py-3.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-extrabold flex items-center space-x-2.5 text-sm shadow-xl shadow-purple-600/50">
-            <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+
+        <h1 id="hero-title">Дюн: Част Втора</h1>
+        <p id="hero-description">Пол Атреидски се обединява с Чани и свободните пустинни хора от Аракис, докато търси възмездие срещу заговорниците, унищожили неговото семейство.</p>
+
+        <div class="hero-actions">
+          <button id="btn-hero-play" class="tv-btn tv-focusable btn-play" onclick="playCurrentMovie()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
             <span>ГЛЕДАЙ ФИЛМА</span>
           </button>
-          <button onclick="scrollToSection('categories-hub')" class="tv-btn tv-focusable px-5 py-3.5 rounded-xl bg-white/10 text-white font-bold flex items-center space-x-2 text-sm border border-white/15">
+
+          <button id="btn-hero-categories" class="tv-btn tv-focusable btn-secondary" onclick="scrollToId('categories-hub')">
             <span>🎭 Всички Жанрове</span>
           </button>
+
+          <div class="hero-rating-box">
+            <span class="star">★</span>
+            <span id="hero-rating" style="color: #fff; font-size: 15px;">8.6</span>
+            <span style="color: #64748b;">/ 10</span>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- Rails -->
-    <main class="relative z-20 px-10 pb-28 space-y-12">
-      <section id="top10-section" class="space-y-4">
-        <h2 class="text-2xl font-black text-white tracking-wide">ТОП 10 НАЙ-ГЛЕДАНИ ЗАГЛАВИЯ</h2>
-        <div id="top10-rail" class="flex items-center space-x-6 overflow-x-auto no-scrollbar py-4 -mx-2 px-2"></div>
+    <main>
+
+      <section id="top10-section">
+        <div class="section-title">
+          <div class="section-bar"></div>
+          <span>ТОП 10 НАЙ-ГЛЕДАНИ ЗАГЛАВИЯ</span>
+        </div>
+        <div id="top10-rail" class="rail"></div>
       </section>
 
-      <section id="categories-hub" class="space-y-4">
-        <h2 class="text-2xl font-black text-white">ХЪБОВЕ ПО КАТЕГОРИИ</h2>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div onclick="filterByGenre('Фантастика')" class="tv-focusable p-5 rounded-2xl bg-indigo-950/60 border border-indigo-500/30 cursor-pointer">
-            <span class="text-3xl">🚀</span>
-            <div class="text-sm font-black text-white mt-3">ФАНТАСТИКА</div>
+      <section id="categories-hub">
+        <div class="section-title">
+          <div class="section-bar"></div>
+          <span>ХЪБОВЕ ПО КАТЕГОРИИ</span>
+        </div>
+        <div id="categories-grid" class="categories-grid">
+          <div class="category-hub-card tv-focusable" onclick="selectGenre('scifi')">
+            <span class="category-icon">🚀</span>
+            <span class="category-name">ФАНТАСТИКА</span>
           </div>
-          <div onclick="filterByGenre('Екшън')" class="tv-focusable p-5 rounded-2xl bg-red-950/60 border border-red-500/30 cursor-pointer">
-            <span class="text-3xl">💥</span>
-            <div class="text-sm font-black text-white mt-3">ЕКШЪН & БОЙНИ</div>
+          <div class="category-hub-card tv-focusable" onclick="selectGenre('action')">
+            <span class="category-icon">💥</span>
+            <span class="category-name">ЕКШЪН & БОЙНИ</span>
           </div>
-          <div onclick="filterByGenre('Трилър')" class="tv-focusable p-5 rounded-2xl bg-emerald-950/60 border border-emerald-500/30 cursor-pointer">
-            <span class="text-3xl">🕵️</span>
-            <div class="text-sm font-black text-white mt-3">ТРИЛЪРИ</div>
+          <div class="category-hub-card tv-focusable" onclick="selectGenre('thriller')">
+            <span class="category-icon">🕵️</span>
+            <span class="category-name">ТРИЛЪРИ & ДРАМА</span>
           </div>
-          <div onclick="filterByGenre('4K')" class="tv-focusable p-5 rounded-2xl bg-purple-950/60 border border-purple-500/30 cursor-pointer">
-            <span class="text-3xl">✨</span>
-            <div class="text-sm font-black text-white mt-3">4K ULTRA HD</div>
+          <div class="category-hub-card tv-focusable" onclick="selectGenre('4k')">
+            <span class="category-icon">✨</span>
+            <span class="category-name">4K ULTRA HD REMUX</span>
           </div>
         </div>
       </section>
 
-      <section id="scifi-section" class="space-y-4">
-        <h2 class="text-xl font-extrabold text-white tracking-wide">🚀 НАУЧНА ФАНТАСТИКА</h2>
-        <div id="scifi-rail" class="flex items-center space-x-4 overflow-x-auto no-scrollbar py-2 -mx-2 px-2"></div>
+      <section id="scifi-section">
+        <div class="section-title">
+          <div class="section-bar"></div>
+          <span>🚀 НАУЧНА ФАНТАСТИКА & КОСМОС</span>
+        </div>
+        <div id="scifi-rail" class="rail"></div>
       </section>
 
-      <section id="action-section" class="space-y-4">
-        <h2 class="text-xl font-extrabold text-white tracking-wide">💥 ЕКШЪН & АДРЕНАЛИН</h2>
-        <div id="action-rail" class="flex items-center space-x-4 overflow-x-auto no-scrollbar py-2 -mx-2 px-2"></div>
+      <section id="action-section">
+        <div class="section-title">
+          <div class="section-bar"></div>
+          <span>💥 ЕКШЪН & АДРЕНАЛИН</span>
+        </div>
+        <div id="action-rail" class="rail"></div>
       </section>
+
+      <section id="thriller-section">
+        <div class="section-title">
+          <div class="section-bar"></div>
+          <span>🕵️ ТРИЛЪРИ, МИСТЕРИИ & ДРАМИ</span>
+        </div>
+        <div id="thriller-rail" class="rail"></div>
+      </section>
+
     </main>
   </div>
 
-  <!-- Video Player Modal -->
-  <div id="player-modal" class="fixed inset-0 z-[100] bg-black hidden flex flex-col justify-between p-8">
-    <div class="flex items-center justify-between">
-      <button onclick="closePlayer()" class="tv-focusable px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-sm">
+  <div id="player-modal">
+    <div class="player-header">
+      <button id="player-btn-back" class="tv-btn tv-focusable btn-secondary" onclick="closePlayer()">
         ✕ Затвори (Back)
       </button>
-      <div id="player-title" class="text-xl font-black text-white">Възпроизвеждане</div>
-      <div class="text-xs text-emerald-300 bg-emerald-950/80 px-3 py-1.5 rounded-lg border border-emerald-500/40 font-bold">
+      <div id="player-movie-title" style="font-size: 20px; font-weight: 900; color: #fff;">Възпроизвеждане</div>
+      <div style="font-size: 11px; font-weight: 800; color: #6ee7b7; background: rgba(6, 78, 59, 0.8); border: 1px solid #10b981; padding: 6px 14px; border-radius: 8px;">
         ✓ Български субтитри (.srt)
       </div>
     </div>
-    <div class="flex-1 flex flex-col items-center justify-center text-center my-4">
-      <video id="tv-video" class="w-full h-full max-h-[72vh] object-contain rounded-2xl shadow-2xl" controls autoplay></video>
+
+    <div style="flex: 1; display: flex; align-items: center; justify-content: center; margin: 16px 0;">
+      <video id="player-video" controls autoplay></video>
     </div>
-    <div class="flex items-center justify-between text-xs text-slate-400 border-t border-white/10 pt-4">
-      <div class="flex items-center space-x-4">
-        <button onclick="seekVideo(-10)" class="tv-focusable px-3 py-1.5 rounded-lg bg-white/10 text-white font-bold">⏪ -10 сек</button>
-        <button onclick="toggleVideoPlay()" class="tv-focusable px-4 py-1.5 rounded-lg bg-purple-600 text-white font-bold">❚❚ Пауза / Пусни</button>
-        <button onclick="seekVideo(10)" class="tv-focusable px-3 py-1.5 rounded-lg bg-white/10 text-white font-bold">+10 сек ⏩</button>
+
+    <div class="player-controls">
+      <div class="player-buttons">
+        <button id="player-btn-rewind" class="tv-btn tv-focusable btn-secondary" onclick="seekVideo(-10)">⏪ -10 сек</button>
+        <button id="player-btn-playpause" class="tv-btn tv-focusable btn-play" onclick="togglePlayPause()">❚❚ Пауза / Пусни</button>
+        <button id="player-btn-forward" class="tv-btn tv-focusable btn-secondary" onclick="seekVideo(10)">+10 сек ⏩</button>
       </div>
-      <div>Натиснете <kbd class="px-2 py-1 bg-white/10 rounded border border-white/20 text-white font-bold">Back / Назад</kbd> за изход</div>
+      <div style="font-size: 12px; color: #94a3b8;">
+        Натиснете <kbd style="background: rgba(255,255,255,0.15); padding: 3px 8px; border-radius: 4px; color: #fff;">Back</kbd> на дистанционното за изход
+      </div>
     </div>
   </div>
 
+  <div id="tv-hud">
+    <span>🎮 Дистанционно: Активно</span>
+    <span style="color: #64748b;">|</span>
+    <span id="hud-focused-name" style="color: #ffffff;">Дюн: Част Втора</span>
+  </div>
+
   <script>
-    const allMovies = [
-      { id: "dune2", title: "Дюн: Част Втора", category: "Фантастика", rank: 1, rating: "8.6", year: "2024", duration: "2ч 46м", quality: "4K REMUX", description: "Пол Атреидски се обединява с Чани и свободните пустинни хора от Аракис...", poster: "https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=500&q=80", backdrop: "https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=1600&q=80" },
-      { id: "oppenheimer", title: "Опенхаймер", category: "Драма", rank: 2, rating: "8.9", year: "2023", duration: "3ч 00м", quality: "4K REMUX", description: "Историята на американския физик Дж. Робърт Опенхаймер...", poster: "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?auto=format&fit=crop&w=500&q=80", backdrop: "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?auto=format&fit=crop&w=1600&q=80" },
-      { id: "interstellar", title: "Интерстелар", category: "Фантастика", rank: 3, rating: "8.7", year: "2014", duration: "2ч 49м", quality: "4K HDR", description: "Екип от смели изследователи предприема най-важната мисия в човешката история...", poster: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=500&q=80", backdrop: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1600&q=80" },
-      { id: "darkknight", title: "Черният рицар", category: "Екшън", rank: 4, rating: "9.0", year: "2008", duration: "2ч 32м", quality: "4K REMUX", description: "Батман срещу Жокера в Готъм Сити...", poster: "https://images.unsplash.com/photo-1509281373149-e957c6296406?auto=format&fit=crop&w=500&q=80", backdrop: "https://images.unsplash.com/photo-1509281373149-e957c6296406?auto=format&fit=crop&w=1600&q=80" },
-      { id: "gladiator", title: "Гладиатор", category: "Екшън", rank: 5, rating: "8.5", year: "2000", duration: "2ч 35м", quality: "1080p BluRay", description: "Бивш римски генерал търси отмъщение срещу корумпирания император...", poster: "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=500&q=80", backdrop: "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=1600&q=80" }
+    const movies = [
+      { id: "dune2", title: "Дюн: Част Втора", category: "Фантастика", rank: 1, rating: "8.6", year: "2024", duration: "2ч 46м", quality: "4K REMUX", description: "Пол Атреидски се обединява с Чани и свободните пустинни хора от Аракис, докато търси възмездие срещу заговорниците, унищожили неговото семейство.", poster: "https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=500&q=80", backdrop: "https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=1600&q=80", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" },
+      { id: "oppenheimer", title: "Опенхаймер", category: "Драма", rank: 2, rating: "8.9", year: "2023", duration: "3ч 00м", quality: "4K REMUX", description: "Историята на американския физик Дж. Робърт Опенхаймер, ръководител на проекта „Манхатън“ за разработване на първото ядрено оръжие в историята.", poster: "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?auto=format&fit=crop&w=500&q=80", backdrop: "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?auto=format&fit=crop&w=1600&q=80", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4" },
+      { id: "interstellar", title: "Интерстелар", category: "Фантастика", rank: 3, rating: "8.7", year: "2014", duration: "2ч 49м", quality: "4K HDR", description: "Екип от смели изследователи предприема най-важната мисия в човешката история: пътуване през червеева дупка в търсене на нов дом за човечеството.", poster: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=500&q=80", backdrop: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1600&q=80", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4" },
+      { id: "darkknight", title: "Черният рицар", category: "Екшън", rank: 4, rating: "9.0", year: "2008", duration: "2ч 32м", quality: "4K REMUX", description: "Когато заплахата, известна като Жокера, потапя Готъм в безредици и анархия, Батман трябва да приеме едно от най-големите си психологически изпитания.", poster: "https://images.unsplash.com/photo-1509281373149-e957c6296406?auto=format&fit=crop&w=500&q=80", backdrop: "https://images.unsplash.com/photo-1509281373149-e957c6296406?auto=format&fit=crop&w=1600&q=80", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4" },
+      { id: "gladiator", title: "Гладиатор", category: "Екшън", rank: 5, rating: "8.5", year: "2000", duration: "2ч 35м", quality: "1080p BluRay", description: "Бивш римски генерал търси отмъщение срещу корумпирания император, който убива семейството му и го изпраща като роб на арената.", poster: "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=500&q=80", backdrop: "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=1600&q=80", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" },
+      { id: "avatar2", title: "Аватар: Природата на водата", category: "Фантастика", rank: 6, rating: "7.6", year: "2022", duration: "3ч 12м", quality: "4K HDR", description: "Джейк Съли и Нейтири защитават своето семейство от ново нашествие на хората на прекрасната луна Пандора.", poster: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=500&q=80", backdrop: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1600&q=80", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4" },
+      { id: "johnwick4", title: "Джон Уик 4", category: "Екшън", rank: 7, rating: "7.7", year: "2023", duration: "2ч 49м", quality: "4K REMUX", description: "Джон Уик открива път към победата над Високата маса в смъртоносен глобален сблъсък с най-добрите убийци на планетата.", poster: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=500&q=80", backdrop: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=1600&q=80", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4" },
+      { id: "inception", title: "Генезис", category: "Трилър", rank: 8, rating: "8.8", year: "2010", duration: "2ч 28м", quality: "1080p BluRay", description: "Опитен крадец, който краде корпоративни тайни чрез иновативна технология за споделяне на сънища, получава шанс да изчисти досието си.", poster: "https://images.unsplash.com/photo-1514306191717-452ec28c7814?auto=format&fit=crop&w=500&q=80", backdrop: "https://images.unsplash.com/photo-1514306191717-452ec28c7814?auto=format&fit=crop&w=1600&q=80", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4" }
     ];
 
-    let activeMovie = allMovies[0];
+    let activeMovie = movies[0];
 
-    function renderUI() {
-      const top10 = document.getElementById('top10-rail');
-      top10.innerHTML = allMovies.map(m => `
-        <div class="tv-focusable flex-shrink-0 flex items-center cursor-pointer" tabindex="0" data-id="${m.id}" onclick="openPlayer('${m.id}')">
-          <div class="rank-number -mr-8 z-10">${m.rank}</div>
-          <div class="w-44 aspect-[2/3] rounded-2xl overflow-hidden bg-slate-900 border border-white/10 relative shadow-2xl">
-            <img src="${m.poster}" class="w-full h-full object-cover">
-            <div class="absolute top-2 right-2 px-1.5 py-0.5 rounded bg-black/80 text-[10px] font-black text-amber-300">★ ${m.rating}</div>
-            <div class="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-purple-950/90 border border-purple-500/50 text-[9px] font-black text-purple-300">${m.quality}</div>
+    function renderApp() {
+      const top10Container = document.getElementById('top10-rail');
+      top10Container.innerHTML = movies.map((m, idx) => `
+        <div class="top10-card tv-focusable" data-id="${m.id}" data-row="top10" data-col="${idx}" onclick="openMoviePlayer('${m.id}')">
+          <div class="rank-number">${m.rank}</div>
+          <div class="poster-box">
+            <img src="${m.poster}" alt="${m.title}" loading="lazy">
+            <div class="card-rating-badge">★ ${m.rating}</div>
+            <div class="card-quality-badge">${m.quality}</div>
           </div>
         </div>
       `).join('');
 
-      const scifi = document.getElementById('scifi-rail');
-      scifi.innerHTML = allMovies.filter(m => m.category === 'Фантастика').map(m => renderCard(m)).join('');
+      const scifiContainer = document.getElementById('scifi-rail');
+      const scifiMovies = movies.filter(m => m.category === 'Фантастика');
+      scifiContainer.innerHTML = scifiMovies.map((m, idx) => renderStandardCard(m, 'scifi', idx)).join('');
 
-      const action = document.getElementById('action-rail');
-      action.innerHTML = allMovies.filter(m => m.category === 'Екшън').map(m => renderCard(m)).join('');
+      const actionContainer = document.getElementById('action-rail');
+      const actionMovies = movies.filter(m => m.category === 'Екшън');
+      actionContainer.innerHTML = actionMovies.map((m, idx) => renderStandardCard(m, 'action', idx)).join('');
+
+      const thrillerContainer = document.getElementById('thriller-rail');
+      const thrillerMovies = movies.filter(m => m.category === 'Трилър' || m.category === 'Драма');
+      thrillerContainer.innerHTML = thrillerMovies.map((m, idx) => renderStandardCard(m, 'thriller', idx)).join('');
     }
 
-    function renderCard(m) {
+    function renderStandardCard(m, rowName, colIdx) {
       return `
-        <div class="tv-focusable flex-shrink-0 w-44 rounded-2xl overflow-hidden bg-slate-900 border border-white/10 cursor-pointer shadow-xl" tabindex="0" data-id="${m.id}" onclick="openPlayer('${m.id}')">
-          <div class="relative aspect-[2/3] w-full overflow-hidden bg-slate-800">
-            <img src="${m.poster}" class="w-full h-full object-cover">
-            <div class="absolute top-2 right-2 px-1.5 py-0.5 rounded bg-black/80 text-[10px] font-black text-amber-300">★ ${m.rating}</div>
-            <div class="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-purple-950/90 text-[9px] font-bold text-purple-300">${m.year}</div>
+        <div class="movie-card tv-focusable" data-id="${m.id}" data-row="${rowName}" data-col="${colIdx}" onclick="openMoviePlayer('${m.id}')">
+          <div class="poster-box" style="width: 100%; border-radius: 17px 17px 0 0; border: none;">
+            <img src="${m.poster}" alt="${m.title}" loading="lazy">
+            <div class="card-rating-badge">★ ${m.rating}</div>
+            <div class="card-quality-badge" style="left: 6px; bottom: 6px;">${m.year}</div>
           </div>
-          <div class="p-3 space-y-0.5">
-            <h3 class="text-xs font-bold text-white truncate">${m.title}</h3>
-            <p class="text-[10px] text-purple-400 font-semibold">${m.category}</p>
+          <div class="card-info">
+            <div class="card-title">${m.title}</div>
+            <div class="card-meta">${m.category} • ${m.quality}</div>
           </div>
         </div>
       `;
@@ -250,179 +697,335 @@
       activeMovie = m;
       document.getElementById('hero-title').innerText = m.title;
       document.getElementById('hero-description').innerText = m.description;
+      document.getElementById('hero-rating').innerText = m.rating;
       document.getElementById('hero-duration').innerText = m.duration;
+      document.getElementById('hero-year').innerText = m.year;
       document.getElementById('hero-quality').innerText = m.quality;
       document.getElementById('hero-genre-badge').innerText = m.category;
       document.getElementById('hero-backdrop').src = m.backdrop;
+
+      const hud = document.getElementById('hud-focused-name');
+      if (hud) hud.innerText = m.title;
     }
 
-    function openPlayer(id) {
-      const m = allMovies.find(item => item.id === id) || activeMovie;
-      updateHero(m);
-      document.getElementById('player-title').innerText = m.title;
-      document.getElementById('player-modal').classList.remove('hidden');
+    const ROW_ORDER = ['genres', 'hero', 'top10', 'categories', 'scifi', 'action', 'thriller'];
 
-      const video = document.getElementById('tv-video');
-      video.src = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
-      video.play();
+    let navState = {
+      location: 'hero',
+      colIndex: 0,
+      prevLocation: 'hero',
+      prevColIndex: 0
+    };
 
-      const closeBtn = document.querySelector('#player-modal button');
-      if (closeBtn) focusElement(closeBtn);
+    function getElementsInZone(zone) {
+      if (zone === 'sidebar') return Array.from(document.querySelectorAll('#sidebar .tv-sidebar-item'));
+      if (zone === 'genres') return Array.from(document.querySelectorAll('#genre-chips .genre-chip'));
+      if (zone === 'hero') return [document.getElementById('btn-hero-play'), document.getElementById('btn-hero-categories')];
+      if (zone === 'top10') return Array.from(document.querySelectorAll('#top10-rail .top10-card'));
+      if (zone === 'categories') return Array.from(document.querySelectorAll('#categories-grid .category-hub-card'));
+      if (zone === 'scifi') return Array.from(document.querySelectorAll('#scifi-rail .movie-card'));
+      if (zone === 'action') return Array.from(document.querySelectorAll('#action-rail .movie-card'));
+      if (zone === 'thriller') return Array.from(document.querySelectorAll('#thriller-rail .movie-card'));
+      if (zone === 'player') {
+        return [
+          document.getElementById('player-btn-back'),
+          document.getElementById('player-btn-rewind'),
+          document.getElementById('player-btn-playpause'),
+          document.getElementById('player-btn-forward')
+        ];
+      }
+      return [];
     }
 
-    function playActiveMovie() {
-      openPlayer(activeMovie.id);
-    }
+    function applyFocus(targetElement, scrollIntoView = true) {
+      if (!targetElement) return;
 
-    function closePlayer() {
-      document.getElementById('player-modal').classList.add('hidden');
-      const video = document.getElementById('tv-video');
-      video.pause();
-      focusElement(document.getElementById('btn-hero-play'));
-    }
+      document.querySelectorAll('.focused').forEach(el => el.classList.remove('focused'));
+      targetElement.classList.add('focused');
+      targetElement.focus();
 
-    function toggleVideoPlay() {
-      const v = document.getElementById('tv-video');
-      if (v.paused) v.play(); else v.pause();
-    }
+      if (scrollIntoView) {
+        targetElement.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+      }
 
-    function seekVideo(seconds) {
-      const v = document.getElementById('tv-video');
-      v.currentTime += seconds;
-    }
+      const mid = targetElement.getAttribute('data-id');
+      if (mid) {
+        const found = movies.find(x => x.id === mid);
+        if (found) updateHero(found);
+      } else {
+        const hud = document.getElementById('hud-focused-name');
+        if (hud) hud.innerText = targetElement.innerText.trim().replace(/\n/g, ' ') || 'Бутон';
+      }
 
-    function filterByGenre(g) {
-      if (g === 'Фантастика') scrollToSection('scifi-section');
-      else if (g === 'Екшън') scrollToSection('action-section');
-      else scrollToSection('top10-section');
-    }
-
-    function scrollToSection(id) {
-      const el = document.getElementById(id);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        const first = el.querySelector('.tv-focusable');
-        if (first) focusElement(first);
+      const hudEl = document.getElementById('tv-hud');
+      if (hudEl) {
+        hudEl.classList.add('active-flash');
+        setTimeout(() => hudEl.classList.remove('active-flash'), 250);
       }
     }
 
-    function focusElement(el) {
-      if (!el) return;
-      document.querySelectorAll('.focused').forEach(e => e.classList.remove('focused'));
-      el.classList.add('focused');
-      el.focus();
-      el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-
-      const id = el.getAttribute('data-id');
-      if (id) {
-        const m = allMovies.find(item => item.id === id);
-        if (m) updateHero(m);
-      }
-    }
-
-    function navigate2D(direction) {
-      const isPlayerOpen = !document.getElementById('player-modal').classList.contains('hidden');
-      const container = isPlayerOpen ? document.getElementById('player-modal') : document.body;
-
-      const current = container.querySelector('.focused') || container.querySelector('.tv-focusable');
-      if (!current) {
-        const first = container.querySelector('.tv-focusable');
-        if (first) focusElement(first);
+    function navigateGrid(direction) {
+      if (navState.location === 'player') {
+        const playerButtons = getElementsInZone('player');
+        if (direction === 'Left') {
+          navState.colIndex = Math.max(0, navState.colIndex - 1);
+        } else if (direction === 'Right') {
+          navState.colIndex = Math.min(playerButtons.length - 1, navState.colIndex + 1);
+        } else if (direction === 'Up') {
+          navState.colIndex = 0;
+        } else if (direction === 'Down') {
+          navState.colIndex = 2;
+        }
+        applyFocus(playerButtons[navState.colIndex], false);
         return;
       }
 
-      const cRect = current.getBoundingClientRect();
-      const cX = cRect.left + cRect.width / 2;
-      const cY = cRect.top + cRect.height / 2;
-
-      const candidates = Array.from(container.querySelectorAll('.tv-focusable:not(.hidden)'))
-        .filter(el => el !== current && el.offsetParent !== null);
-
-      let bestCandidate = null;
-      let minDistance = Infinity;
-
-      for (const el of candidates) {
-        const r = el.getBoundingClientRect();
-        const eX = r.left + r.width / 2;
-        const eY = r.top + r.height / 2;
-
-        const dx = eX - cX;
-        const dy = eY - cY;
-
-        let isValid = false;
-        let penalty = 0;
-
-        if (direction === 'Right') {
-          isValid = dx > 10;
-          penalty = Math.abs(dy) * 3.0;
-        } else if (direction === 'Left') {
-          isValid = dx < -10;
-          penalty = Math.abs(dy) * 3.0;
+      if (navState.location === 'sidebar') {
+        const sidebarItems = getElementsInZone('sidebar');
+        if (direction === 'Up') {
+          navState.colIndex = Math.max(0, navState.colIndex - 1);
+          applyFocus(sidebarItems[navState.colIndex], false);
         } else if (direction === 'Down') {
-          isValid = dy > 10;
-          penalty = Math.abs(dx) * 1.5;
-        } else if (direction === 'Up') {
-          isValid = dy < -10;
-          penalty = Math.abs(dx) * 1.5;
-        }
-
-        if (isValid) {
-          const dist = Math.hypot(dx, dy) + penalty;
-          if (dist < minDistance) {
-            minDistance = dist;
-            bestCandidate = el;
+          navState.colIndex = Math.min(sidebarItems.length - 1, navState.colIndex + 1);
+          applyFocus(sidebarItems[navState.colIndex], false);
+        } else if (direction === 'Right') {
+          document.getElementById('sidebar').classList.remove('expanded');
+          navState.location = navState.prevLocation || 'hero';
+          navState.colIndex = navState.prevColIndex || 0;
+          const items = getElementsInZone(navState.location);
+          if (items.length > 0) {
+            navState.colIndex = Math.min(navState.colIndex, items.length - 1);
+            applyFocus(items[navState.colIndex]);
           }
         }
+        return;
       }
 
-      if (bestCandidate) {
-        focusElement(bestCandidate);
+      const currentZone = navState.location;
+      const currentItems = getElementsInZone(currentZone);
+
+      if (direction === 'Left') {
+        if (navState.colIndex > 0) {
+          navState.colIndex--;
+          applyFocus(currentItems[navState.colIndex]);
+        } else {
+          navState.prevLocation = navState.location;
+          navState.prevColIndex = navState.colIndex;
+          navState.location = 'sidebar';
+          navState.colIndex = 0;
+          document.getElementById('sidebar').classList.add('expanded');
+          const sidebarItems = getElementsInZone('sidebar');
+          applyFocus(sidebarItems[0], false);
+        }
+      } else if (direction === 'Right') {
+        if (navState.colIndex < currentItems.length - 1) {
+          navState.colIndex++;
+          applyFocus(currentItems[navState.colIndex]);
+        }
+      } else if (direction === 'Down') {
+        const rowIdx = ROW_ORDER.indexOf(currentZone);
+        if (rowIdx < ROW_ORDER.length - 1) {
+          const nextZone = ROW_ORDER[rowIdx + 1];
+          const nextItems = getElementsInZone(nextZone);
+          if (nextItems.length > 0) {
+            navState.location = nextZone;
+            navState.colIndex = Math.min(navState.colIndex, nextItems.length - 1);
+            applyFocus(nextItems[navState.colIndex]);
+          }
+        }
+      } else if (direction === 'Up') {
+        const rowIdx = ROW_ORDER.indexOf(currentZone);
+        if (rowIdx > 0) {
+          const prevZone = ROW_ORDER[rowIdx - 1];
+          const prevItems = getElementsInZone(prevZone);
+          if (prevItems.length > 0) {
+            navState.location = prevZone;
+            navState.colIndex = Math.min(navState.colIndex, prevItems.length - 1);
+            applyFocus(prevItems[navState.colIndex]);
+          }
+        }
       }
     }
 
     window.handleTvRemote = function(action) {
-      const isPlayerOpen = !document.getElementById('player-modal').classList.contains('hidden');
-
       if (action === 'Back') {
-        if (isPlayerOpen) {
+        if (navState.location === 'player') {
           closePlayer();
           return;
         }
+        if (navState.location === 'sidebar') {
+          document.getElementById('sidebar').classList.remove('expanded');
+          navState.location = navState.prevLocation || 'hero';
+          navState.colIndex = navState.prevColIndex || 0;
+          const items = getElementsInZone(navState.location);
+          if (items.length > 0) applyFocus(items[navState.colIndex]);
+          return;
+        }
+        if (navState.location !== 'hero') {
+          navState.location = 'hero';
+          navState.colIndex = 0;
+          applyFocus(document.getElementById('btn-hero-play'));
+          return;
+        }
+        if (window.AndroidNative && window.AndroidNative.exitApp) {
+          window.AndroidNative.exitApp();
+        }
+        return;
       }
 
       if (action === 'Enter') {
-        const cur = document.querySelector('.focused');
-        if (cur) cur.click();
+        const currentFocused = document.querySelector('.focused');
+        if (currentFocused) currentFocused.click();
+        return;
+      }
+
+      if (action === 'PlayPause' || action === 'Play' || action === 'Pause') {
+        if (navState.location === 'player') togglePlayPause();
+        else playCurrentMovie();
+        return;
+      }
+
+      if (action === 'FastForward') {
+        if (navState.location === 'player') seekVideo(10);
+        return;
+      }
+
+      if (action === 'Rewind') {
+        if (navState.location === 'player') seekVideo(-10);
         return;
       }
 
       if (['Up', 'Down', 'Left', 'Right'].includes(action)) {
-        navigate2D(action);
+        navigateGrid(action);
       }
     };
 
     window.addEventListener('keydown', (e) => {
-      const map = {
+      const keyMap = {
         'ArrowUp': 'Up',
         'ArrowDown': 'Down',
         'ArrowLeft': 'Left',
         'ArrowRight': 'Right',
         'Enter': 'Enter',
+        ' ': 'Enter',
         'Escape': 'Back',
         'Backspace': 'Back'
       };
 
-      if (map[e.key]) {
+      if (keyMap[e.key]) {
         e.preventDefault();
-        window.handleTvRemote(map[e.key]);
+        window.handleTvRemote(keyMap[e.key]);
       }
     });
 
+    function openMoviePlayer(id) {
+      const m = movies.find(x => x.id === id) || activeMovie;
+      updateHero(m);
+
+      const modal = document.getElementById('player-modal');
+      const video = document.getElementById('player-video');
+      document.getElementById('player-movie-title').innerText = m.title;
+
+      video.src = m.videoUrl;
+      modal.classList.add('open');
+      video.play();
+
+      navState.prevLocation = navState.location;
+      navState.prevColIndex = navState.colIndex;
+      navState.location = 'player';
+      navState.colIndex = 2;
+      applyFocus(document.getElementById('player-btn-playpause'), false);
+    }
+
+    function playCurrentMovie() {
+      openMoviePlayer(activeMovie.id);
+    }
+
+    function closePlayer() {
+      const modal = document.getElementById('player-modal');
+      const video = document.getElementById('player-video');
+      video.pause();
+      modal.classList.remove('open');
+
+      navState.location = navState.prevLocation || 'hero';
+      navState.colIndex = navState.prevColIndex || 0;
+      const items = getElementsInZone(navState.location);
+      if (items.length > 0) applyFocus(items[navState.colIndex]);
+      else applyFocus(document.getElementById('btn-hero-play'));
+    }
+
+    function togglePlayPause() {
+      const video = document.getElementById('player-video');
+      if (video.paused) video.play();
+      else video.pause();
+    }
+
+    function seekVideo(seconds) {
+      const video = document.getElementById('player-video');
+      video.currentTime = Math.max(0, video.currentTime + seconds);
+    }
+
+    function scrollToId(id) {
+      const el = document.getElementById(id);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function selectGenre(genreKey) {
+      document.querySelectorAll('.genre-chip').forEach(btn => btn.classList.remove('active'));
+      const clicked = event ? event.currentTarget : null;
+      if (clicked) clicked.classList.add('active');
+
+      if (genreKey === 'scifi') {
+        scrollToId('scifi-section');
+        navState.location = 'scifi';
+        navState.colIndex = 0;
+        applyFocus(getElementsInZone('scifi')[0]);
+      } else if (genreKey === 'action') {
+        scrollToId('action-section');
+        navState.location = 'action';
+        navState.colIndex = 0;
+        applyFocus(getElementsInZone('action')[0]);
+      } else if (genreKey === 'thriller') {
+        scrollToId('thriller-section');
+        navState.location = 'thriller';
+        navState.colIndex = 0;
+        applyFocus(getElementsInZone('thriller')[0]);
+      } else if (genreKey === 'top10') {
+        scrollToId('top10-section');
+        navState.location = 'top10';
+        navState.colIndex = 0;
+        applyFocus(getElementsInZone('top10')[0]);
+      } else {
+        scrollToId('top10-section');
+      }
+    }
+
+    function onSidebarClick(target) {
+      document.getElementById('sidebar').classList.remove('expanded');
+      if (target === 'home') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        navState.location = 'hero';
+        navState.colIndex = 0;
+        applyFocus(document.getElementById('btn-hero-play'));
+      } else if (target === 'top10') {
+        selectGenre('top10');
+      } else if (target === 'categories') {
+        scrollToId('categories-hub');
+        navState.location = 'categories';
+        navState.colIndex = 0;
+        applyFocus(getElementsInZone('categories')[0]);
+      } else if (target === 'usb') {
+        alert('📁 USB Флашка: Поставете USB памет в телевизора. Файловете ще се заредят директно тук.');
+      }
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
-      renderUI();
+      renderApp();
       setTimeout(() => {
-        focusElement(document.getElementById('btn-hero-play'));
-      }, 200);
+        navState.location = 'hero';
+        navState.colIndex = 0;
+        applyFocus(document.getElementById('btn-hero-play'), false);
+      }, 150);
 
       const clockEl = document.getElementById('clock');
       function tick() {
