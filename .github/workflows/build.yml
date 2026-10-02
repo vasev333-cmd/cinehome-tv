@@ -23,17 +23,17 @@ jobs:
         with:
           gradle-version: '8.6'
 
-      - name: Prepare Clean Android Project
+      - name: Prepare Clean Android TV Project
         run: |
           rm -rf build-app
           mkdir -p build-app/app/src/main/java/com/cinehome/tv
           mkdir -p build-app/app/src/main/assets
           mkdir -p build-app/app/src/main/res/drawable
 
-          # Вграждане на вашия интерфейс вътре в приложението
+          # Copy index.html into Android assets
           cp index.html build-app/app/src/main/assets/index.html
 
-          # Приемане на Android лицензи и път до SDK
+          # Accept Android SDK Licenses & set SDK dir
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
           echo "sdk.dir=$ANDROID_HOME" > build-app/local.properties
           echo "android.useAndroidX=true" > build-app/gradle.properties
@@ -78,8 +78,8 @@ jobs:
                   applicationId 'com.cinehome.tv'
                   minSdk 21
                   targetSdk 34
-                  versionCode 1
-                  versionName '1.0'
+                  versionCode 3
+                  versionName '1.2'
               }
 
               buildTypes {
@@ -98,13 +98,14 @@ jobs:
           }
           EOF
 
-          # AndroidManifest.xml (специално за начален екран на Android TV)
+          # AndroidManifest.xml (Leanback Launcher for TCL TV)
           cat << 'EOF' > build-app/app/src/main/AndroidManifest.xml
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android"
               package="com.cinehome.tv">
 
               <uses-permission android:name="android.permission.INTERNET" />
+              <uses-permission android:name="android.permission.WAKE_LOCK" />
               <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
               <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
 
@@ -133,7 +134,7 @@ jobs:
           </manifest>
           EOF
 
-          # tv_banner.xml (икона за началния екран на TCL)
+          # tv_banner.xml (Launcher icon for Android TV 16:9 banner)
           cat << 'EOF' > build-app/app/src/main/res/drawable/tv_banner.xml
           <?xml version="1.0" encoding="utf-8"?>
           <shape xmlns:android="http://schemas.android.com/apk/res/android"
@@ -146,7 +147,7 @@ jobs:
           </shape>
           EOF
 
-          # MainActivity.java (директно управление с дистанционното)
+          # MainActivity.java (Direct TV Remote Dispatching Bridge)
           cat << 'EOF' > build-app/app/src/main/java/com/cinehome/tv/MainActivity.java
           package com.cinehome.tv;
 
@@ -154,9 +155,11 @@ jobs:
           import android.os.Bundle;
           import android.view.KeyEvent;
           import android.view.View;
+          import android.view.WindowManager;
           import android.webkit.WebSettings;
           import android.webkit.WebView;
           import android.webkit.WebViewClient;
+          import android.webkit.JavascriptInterface;
 
           public class MainActivity extends Activity {
               private WebView webView;
@@ -164,14 +167,26 @@ jobs:
               @Override
               protected void onCreate(Bundle savedInstanceState) {
                   super.onCreate(savedInstanceState);
+
+                  // Keep screen awake while watching TV
+                  getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+                  // Immersive TV fullscreen mode
                   getWindow().getDecorView().setSystemUiVisibility(
                       View.SYSTEM_UI_FLAG_FULLSCREEN |
                       View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
-                      View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                      View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY |
+                      View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN |
+                      View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION |
+                      View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                   );
 
                   webView = new WebView(this);
                   setContentView(webView);
+
+                  webView.setFocusable(true);
+                  webView.setFocusableInTouchMode(true);
+                  webView.requestFocus();
 
                   WebSettings s = webView.getSettings();
                   s.setJavaScriptEnabled(true);
@@ -179,10 +194,22 @@ jobs:
                   s.setDatabaseEnabled(true);
                   s.setAllowFileAccess(true);
                   s.setAllowContentAccess(true);
+                  s.setAllowFileAccessFromFileURLs(true);
+                  s.setAllowUniversalAccessFromFileURLs(true);
                   s.setMediaPlaybackRequiresUserGesture(false);
+                  s.setLoadWithOverviewMode(true);
+                  s.setUseWideViewPort(true);
 
                   webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
                   webView.setWebViewClient(new WebViewClient());
+
+                  webView.addJavascriptInterface(new Object() {
+                      @JavascriptInterface
+                      public void exitApp() {
+                          finish();
+                      }
+                  }, "AndroidNative");
+
                   webView.loadUrl("file:///android_asset/index.html");
               }
 
@@ -190,12 +217,28 @@ jobs:
               public boolean dispatchKeyEvent(KeyEvent event) {
                   if (event.getAction() == KeyEvent.ACTION_DOWN) {
                       int code = event.getKeyCode();
-                      if (code == KeyEvent.KEYCODE_DPAD_UP || code == KeyEvent.KEYCODE_DPAD_DOWN ||
-                          code == KeyEvent.KEYCODE_DPAD_LEFT || code == KeyEvent.KEYCODE_DPAD_RIGHT ||
-                          code == KeyEvent.KEYCODE_DPAD_CENTER || code == KeyEvent.KEYCODE_ENTER) {
-                          return webView.dispatchKeyEvent(event);
-                      } else if (code == KeyEvent.KEYCODE_BACK) {
-                          webView.evaluateJavascript("window.dispatchEvent(new KeyboardEvent('keydown', {'key': 'Escape'}));", null);
+                      String action = null;
+
+                      if (code == KeyEvent.KEYCODE_DPAD_UP) action = "Up";
+                      else if (code == KeyEvent.KEYCODE_DPAD_DOWN) action = "Down";
+                      else if (code == KeyEvent.KEYCODE_DPAD_LEFT) action = "Left";
+                      else if (code == KeyEvent.KEYCODE_DPAD_RIGHT) action = "Right";
+                      else if (code == KeyEvent.KEYCODE_DPAD_CENTER || code == KeyEvent.KEYCODE_ENTER || code == KeyEvent.KEYCODE_NUMPAD_ENTER) action = "Enter";
+                      else if (code == KeyEvent.KEYCODE_BACK) action = "Back";
+                      else if (code == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE) action = "PlayPause";
+                      else if (code == KeyEvent.KEYCODE_MEDIA_PLAY) action = "Play";
+                      else if (code == KeyEvent.KEYCODE_MEDIA_PAUSE) action = "Pause";
+                      else if (code == KeyEvent.KEYCODE_MEDIA_FAST_FORWARD) action = "FastForward";
+                      else if (code == KeyEvent.KEYCODE_MEDIA_REWIND) action = "Rewind";
+
+                      if (action != null) {
+                          final String act = action;
+                          webView.post(new Runnable() {
+                              @Override
+                              public void run() {
+                                  webView.evaluateJavascript("if (window.handleTvRemote) { window.handleTvRemote('" + act + "'); }", null);
+                              }
+                          });
                           return true;
                       }
                   }
