@@ -3,20 +3,48 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CineHome TV Ultimate</title>
+  <title>CineHome TV</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
     * { font-family: 'Plus Jakarta Sans', sans-serif; user-select: none; }
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    .tv-focusable { transition: transform 0.25s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.25s ease; outline: none; }
+
+    .tv-focusable {
+      transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+      outline: none !important;
+    }
+
     .tv-focusable.focused {
       transform: scale(1.08) translateY(-4px);
-      box-shadow: 0 16px 36px -6px rgba(147, 51, 234, 0.5), 0 0 0 3px #c084fc;
-      border-color: #e9d5ff !important;
-      z-index: 30;
+      box-shadow: 0 0 0 3.5px #ffffff, 0 16px 36px rgba(168, 85, 247, 0.6) !important;
+      border-color: #ffffff !important;
+      z-index: 50 !important;
     }
+
+    .tv-btn.focused {
+      transform: scale(1.06);
+      box-shadow: 0 0 0 3px #ffffff, 0 8px 24px rgba(168, 85, 247, 0.7) !important;
+      background: linear-gradient(135deg, #a855f7, #ec4899) !important;
+      color: #ffffff !important;
+    }
+
+    .tv-sidebar-item.focused {
+      background-color: rgba(168, 85, 247, 0.4) !important;
+      border-color: #c084fc !important;
+      color: #ffffff !important;
+      transform: translateX(6px);
+      box-shadow: 0 0 0 2px #ffffff !important;
+    }
+
+    .genre-chip.focused {
+      background: linear-gradient(135deg, #9333ea, #ec4899) !important;
+      color: #ffffff !important;
+      transform: scale(1.08);
+      box-shadow: 0 0 0 2.5px #ffffff, 0 8px 20px rgba(236, 72, 153, 0.5) !important;
+    }
+
     .rank-number {
       font-size: 7.5rem;
       font-weight: 900;
@@ -30,36 +58,30 @@
   </style>
 </head>
 <body class="bg-[#06070a] text-slate-100 overflow-x-hidden min-h-screen flex">
-  <!-- Left HBO Max Sidebar -->
-  <aside id="sidebar" class="fixed left-0 top-0 bottom-0 z-50 w-20 hover:w-64 transition-all duration-300 bg-black/85 backdrop-blur-2xl border-r border-white/10 flex flex-col justify-between py-6 px-3 group">
+  <div id="ambient-glow" class="fixed top-0 left-0 right-0 h-[500px] opacity-40 pointer-events-none transition-all duration-700 blur-[130px] bg-gradient-to-b from-purple-800 via-indigo-950 to-transparent"></div>
+
+  <!-- Left Sidebar -->
+  <aside id="sidebar" class="fixed left-0 top-0 bottom-0 z-50 w-20 hover:w-64 transition-all duration-300 bg-black/90 backdrop-blur-2xl border-r border-white/10 flex flex-col justify-between py-6 px-3 group">
     <div class="space-y-6">
       <div class="flex items-center space-x-3 px-2">
         <div class="w-11 h-11 rounded-xl bg-gradient-to-tr from-purple-600 via-pink-500 to-indigo-500 flex items-center justify-center font-black text-2xl text-white shadow-lg shadow-purple-600/50 flex-shrink-0">C</div>
-        <div class="opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap overflow-hidden">
+        <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap overflow-hidden">
           <div class="font-black text-lg tracking-tight bg-gradient-to-r from-white via-purple-200 to-pink-300 bg-clip-text text-transparent">CINEHOME <span class="text-purple-400">MAX</span></div>
-          <div class="text-[10px] text-purple-400 font-bold uppercase tracking-widest">TCL PRO EDITION</div>
+          <div class="text-[10px] text-purple-400 font-bold uppercase tracking-widest">TCL EDITION</div>
         </div>
       </div>
-      <nav class="space-y-1.5 pt-4">
-        <button class="tv-focusable w-full flex items-center space-x-4 px-3 py-3 rounded-xl text-slate-300 hover:text-white" onclick="filterByGenre('Всички')">
+      <nav class="space-y-2 pt-4">
+        <button class="tv-focusable tv-sidebar-item w-full flex items-center space-x-4 px-3 py-3 rounded-xl text-slate-300 hover:text-white" onclick="filterByGenre('Всички')">
           <span class="text-xl flex-shrink-0">🏠</span>
           <span class="text-sm font-semibold opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Начало</span>
         </button>
-        <button class="tv-focusable w-full flex items-center space-x-4 px-3 py-3 rounded-xl text-slate-300 hover:text-white" onclick="scrollToSection('categories-hub')">
+        <button class="tv-focusable tv-sidebar-item w-full flex items-center space-x-4 px-3 py-3 rounded-xl text-slate-300 hover:text-white" onclick="scrollToSection('categories-hub')">
           <span class="text-xl flex-shrink-0">🎭</span>
           <span class="text-sm font-semibold opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Категории & Жанрове</span>
         </button>
-        <button class="tv-focusable w-full flex items-center space-x-4 px-3 py-3 rounded-xl text-slate-300 hover:text-white" onclick="scrollToSection('top10-section')">
+        <button class="tv-focusable tv-sidebar-item w-full flex items-center space-x-4 px-3 py-3 rounded-xl text-slate-300 hover:text-white" onclick="scrollToSection('top10-section')">
           <span class="text-xl flex-shrink-0">🔥</span>
           <span class="text-sm font-semibold opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Топ 10 Хита</span>
-        </button>
-        <button class="tv-focusable w-full flex items-center space-x-4 px-3 py-3 rounded-xl text-slate-300 hover:text-white" onclick="filterByGenre('USB')">
-          <span class="text-xl flex-shrink-0">📁</span>
-          <span class="text-sm font-semibold opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">USB Флашка</span>
-        </button>
-        <button class="tv-focusable w-full flex items-center space-x-4 px-3 py-3 rounded-xl text-slate-300 hover:text-white">
-          <span class="text-xl flex-shrink-0">🌐</span>
-          <span class="text-sm font-semibold opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Домашен NAS</span>
         </button>
       </nav>
     </div>
@@ -67,50 +89,46 @@
 
   <!-- Main Content -->
   <div class="flex-1 ml-20 min-w-0">
-    <!-- Top Filter Chips -->
     <header class="relative z-30 px-10 py-5 bg-gradient-to-b from-black/90 via-black/50 to-transparent flex flex-col space-y-4">
       <div class="flex items-center justify-between">
         <div class="flex items-center space-x-3">
-          <span class="text-xs font-bold uppercase tracking-wider text-purple-400 bg-purple-950/70 border border-purple-500/30 px-3 py-1 rounded-full">
-            📁 Флашка: Kingston 128GB • 18 заглавия
-          </span>
-          <span class="text-xs text-slate-400 bg-white/5 border border-white/10 px-3 py-1 rounded-full">
-            4K Remux HEVC • Dolby Atmos
-          </span>
+          <span class="text-xs font-bold uppercase tracking-wider text-purple-400 bg-purple-950/70 border border-purple-500/30 px-3 py-1 rounded-full">📁 USB Памет • Свързана</span>
+          <span class="text-xs text-slate-400 bg-white/5 border border-white/10 px-3 py-1 rounded-full">4K Remux HEVC • Dolby Atmos</span>
         </div>
         <div id="clock" class="text-slate-200 text-sm font-bold tracking-widest bg-white/10 px-3 py-1 rounded-lg border border-white/10">12:00</div>
       </div>
-      <!-- Genre Pills -->
       <div class="flex items-center space-x-2.5 overflow-x-auto no-scrollbar py-1">
-        <button class="tv-focusable px-4 py-2 rounded-xl text-xs font-bold uppercase bg-purple-600 text-white flex-shrink-0" onclick="filterByGenre('Всички')">🌟 Всички Категории</button>
-        <button class="tv-focusable px-4 py-2 rounded-xl text-xs font-bold uppercase bg-white/5 text-slate-300 flex-shrink-0" onclick="filterByGenre('Екшън')">💥 Екшън & Бойни</button>
-        <button class="tv-focusable px-4 py-2 rounded-xl text-xs font-bold uppercase bg-white/5 text-slate-300 flex-shrink-0" onclick="filterByGenre('Фантастика')">🚀 Научна Фантастика</button>
-        <button class="tv-focusable px-4 py-2 rounded-xl text-xs font-bold uppercase bg-white/5 text-slate-300 flex-shrink-0" onclick="filterByGenre('Трилър')">🕵️ Трилъри & Мистерии</button>
-        <button class="tv-focusable px-4 py-2 rounded-xl text-xs font-bold uppercase bg-white/5 text-slate-300 flex-shrink-0" onclick="filterByGenre('4K')">✨ 4K UHD Remux</button>
-        <button class="tv-focusable px-4 py-2 rounded-xl text-xs font-bold uppercase bg-white/5 text-slate-300 flex-shrink-0" onclick="filterByGenre('BG')">🇧🇬 С Български субтитри</button>
+        <button class="genre-chip tv-focusable focused px-4 py-2 rounded-xl text-xs font-bold uppercase bg-purple-600 text-white flex-shrink-0" onclick="filterByGenre('Всички')">🌟 Всички Категории</button>
+        <button class="genre-chip tv-focusable px-4 py-2 rounded-xl text-xs font-bold uppercase bg-white/10 text-slate-300 flex-shrink-0" onclick="filterByGenre('Екшън')">💥 Екшън & Бойни</button>
+        <button class="genre-chip tv-focusable px-4 py-2 rounded-xl text-xs font-bold uppercase bg-white/10 text-slate-300 flex-shrink-0" onclick="filterByGenre('Фантастика')">🚀 Научна Фантастика</button>
+        <button class="genre-chip tv-focusable px-4 py-2 rounded-xl text-xs font-bold uppercase bg-white/10 text-slate-300 flex-shrink-0" onclick="filterByGenre('Трилър')">🕵️ Трилъри & Мистерии</button>
+        <button class="genre-chip tv-focusable px-4 py-2 rounded-xl text-xs font-bold uppercase bg-white/10 text-slate-300 flex-shrink-0" onclick="filterByGenre('Драма')">🎭 Драма & История</button>
       </div>
     </header>
 
     <!-- Hero Billboard -->
     <section class="relative px-10 pt-2 pb-10 z-20 min-h-[420px] flex flex-col justify-end">
       <div class="absolute inset-0 -top-28 -z-10 overflow-hidden">
-        <img id="hero-backdrop" src="https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=1600&q=80" alt="Backdrop" class="w-full h-full object-cover opacity-35 scale-105">
+        <img id="hero-backdrop" src="https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=1600&q=80" alt="Backdrop" class="w-full h-full object-cover opacity-35 scale-105 transition-all duration-500">
         <div class="absolute inset-0 bg-gradient-to-t from-[#06070a] via-[#06070a]/70 to-transparent"></div>
         <div class="absolute inset-0 bg-gradient-to-r from-[#06070a] via-[#06070a]/60 to-transparent"></div>
       </div>
       <div class="max-w-2xl space-y-3.5">
         <div class="flex items-center space-x-2 text-xs font-bold uppercase tracking-wider">
           <span id="hero-genre-badge" class="px-2.5 py-1 rounded-md bg-purple-600 text-white font-black text-[11px]">Научна Фантастика</span>
-          <span class="px-2 py-0.5 rounded bg-white/10 text-slate-300">4K REMUX</span>
+          <span class="px-2 py-0.5 rounded bg-white/10 text-slate-300" id="hero-quality">4K REMUX</span>
           <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold">ATMOS 7.1</span>
           <span class="text-slate-400 font-semibold" id="hero-duration">2ч 46м</span>
         </div>
         <h1 id="hero-title" class="text-4xl lg:text-6xl font-black text-white tracking-tight drop-shadow-xl leading-none">Дюн: Част Втора</h1>
         <p id="hero-description" class="text-slate-300 text-sm leading-relaxed line-clamp-3">Пол Атреидски се обединява с Чани и свободните пустинни хора от Аракис...</p>
         <div class="flex items-center space-x-4 pt-2">
-          <button id="btn-play" onclick="openPlayer()" class="tv-focusable px-7 py-3.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-extrabold flex items-center space-x-2.5 text-sm shadow-xl shadow-purple-600/50">
+          <button id="btn-hero-play" onclick="playActiveMovie()" class="tv-btn tv-focusable px-7 py-3.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-extrabold flex items-center space-x-2.5 text-sm shadow-xl shadow-purple-600/50">
             <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
             <span>ГЛЕДАЙ ФИЛМА</span>
+          </button>
+          <button onclick="scrollToSection('categories-hub')" class="tv-btn tv-focusable px-5 py-3.5 rounded-xl bg-white/10 text-white font-bold flex items-center space-x-2 text-sm border border-white/15">
+            <span>🎭 Всички Жанрове</span>
           </button>
         </div>
       </div>
@@ -118,16 +136,11 @@
 
     <!-- Rails -->
     <main class="relative z-20 px-10 pb-28 space-y-12">
-      <!-- TOP 10 -->
       <section id="top10-section" class="space-y-4">
-        <div class="flex items-center space-x-3">
-          <div class="w-2.5 h-6 rounded-full bg-gradient-to-b from-purple-500 to-pink-500"></div>
-          <h2 class="text-2xl font-black text-white tracking-wide">ТОП 10 НАЙ-ГЛЕДАНИ ЗАГЛАВИЯ</h2>
-        </div>
+        <h2 class="text-2xl font-black text-white tracking-wide">ТОП 10 НАЙ-ГЛЕДАНИ ЗАГЛАВИЯ</h2>
         <div id="top10-rail" class="flex items-center space-x-6 overflow-x-auto no-scrollbar py-4 -mx-2 px-2"></div>
       </section>
 
-      <!-- Category Hubs -->
       <section id="categories-hub" class="space-y-4">
         <h2 class="text-2xl font-black text-white">ХЪБОВЕ ПО КАТЕГОРИИ</h2>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -149,63 +162,276 @@
           </div>
         </div>
       </section>
+
+      <section id="scifi-section" class="space-y-4">
+        <h2 class="text-xl font-extrabold text-white tracking-wide">🚀 НАУЧНА ФАНТАСТИКА</h2>
+        <div id="scifi-rail" class="flex items-center space-x-4 overflow-x-auto no-scrollbar py-2 -mx-2 px-2"></div>
+      </section>
+
+      <section id="action-section" class="space-y-4">
+        <h2 class="text-xl font-extrabold text-white tracking-wide">💥 ЕКШЪН & АДРЕНАЛИН</h2>
+        <div id="action-rail" class="flex items-center space-x-4 overflow-x-auto no-scrollbar py-2 -mx-2 px-2"></div>
+      </section>
     </main>
   </div>
 
-  <!-- Player Modal -->
-  <div id="player-modal" class="fixed inset-0 z-50 bg-black hidden flex flex-col justify-between p-8">
+  <!-- Video Player Modal -->
+  <div id="player-modal" class="fixed inset-0 z-[100] bg-black hidden flex flex-col justify-between p-8">
     <div class="flex items-center justify-between">
-      <button onclick="closePlayer()" class="w-11 h-11 rounded-full bg-white/10 flex items-center justify-center text-white text-lg font-bold">✕</button>
+      <button onclick="closePlayer()" class="tv-focusable px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-sm">
+        ✕ Затвори (Back)
+      </button>
       <div id="player-title" class="text-xl font-black text-white">Възпроизвеждане</div>
-      <div class="text-xs text-emerald-300">✓ Български субтитри (.srt)</div>
+      <div class="text-xs text-emerald-300 bg-emerald-950/80 px-3 py-1.5 rounded-lg border border-emerald-500/40 font-bold">
+        ✓ Български субтитри (.srt)
+      </div>
     </div>
-    <div class="flex-1 flex flex-col items-center justify-center text-center">
-      <video id="tv-video" class="w-full h-full max-h-[70vh] object-contain rounded-xl" controls autoplay></video>
+    <div class="flex-1 flex flex-col items-center justify-center text-center my-4">
+      <video id="tv-video" class="w-full h-full max-h-[72vh] object-contain rounded-2xl shadow-2xl" controls autoplay></video>
+    </div>
+    <div class="flex items-center justify-between text-xs text-slate-400 border-t border-white/10 pt-4">
+      <div class="flex items-center space-x-4">
+        <button onclick="seekVideo(-10)" class="tv-focusable px-3 py-1.5 rounded-lg bg-white/10 text-white font-bold">⏪ -10 сек</button>
+        <button onclick="toggleVideoPlay()" class="tv-focusable px-4 py-1.5 rounded-lg bg-purple-600 text-white font-bold">❚❚ Пауза / Пусни</button>
+        <button onclick="seekVideo(10)" class="tv-focusable px-3 py-1.5 rounded-lg bg-white/10 text-white font-bold">+10 сек ⏩</button>
+      </div>
+      <div>Натиснете <kbd class="px-2 py-1 bg-white/10 rounded border border-white/20 text-white font-bold">Back / Назад</kbd> за изход</div>
     </div>
   </div>
 
   <script>
-    const movies = [
-      { id: "dune2", title: "Дюн: Част Втора", category: "Фантастика", rank: 1, rating: "8.6", duration: "2ч 46м", quality: "4K REMUX", description: "Пол Атреидски се обединява с Чани...", poster: "https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=500&q=80", backdrop: "https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=1600&q=80" },
-      { id: "oppenheimer", title: "Опенхаймер", category: "Драма", rank: 2, rating: "8.9", duration: "3ч 00м", quality: "4K REMUX", description: "Историята на Манхатън проекта...", poster: "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?auto=format&fit=crop&w=500&q=80", backdrop: "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?auto=format&fit=crop&w=1600&q=80" },
-      { id: "interstellar", title: "Интерстелар", category: "Фантастика", rank: 3, rating: "8.7", duration: "2ч 49м", quality: "4K HDR", description: "Мисия през червеева дупка...", poster: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=500&q=80", backdrop: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1600&q=80" },
-      { id: "darkknight", title: "Черният рицар", category: "Екшън", rank: 4, rating: "9.0", duration: "2ч 32м", quality: "4K REMUX", description: "Батман срещу Жокера...", poster: "https://images.unsplash.com/photo-1509281373149-e957c6296406?auto=format&fit=crop&w=500&q=80", backdrop: "https://images.unsplash.com/photo-1509281373149-e957c6296406?auto=format&fit=crop&w=1600&q=80" }
+    const allMovies = [
+      { id: "dune2", title: "Дюн: Част Втора", category: "Фантастика", rank: 1, rating: "8.6", year: "2024", duration: "2ч 46м", quality: "4K REMUX", description: "Пол Атреидски се обединява с Чани и свободните пустинни хора от Аракис...", poster: "https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=500&q=80", backdrop: "https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=1600&q=80" },
+      { id: "oppenheimer", title: "Опенхаймер", category: "Драма", rank: 2, rating: "8.9", year: "2023", duration: "3ч 00м", quality: "4K REMUX", description: "Историята на американския физик Дж. Робърт Опенхаймер...", poster: "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?auto=format&fit=crop&w=500&q=80", backdrop: "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?auto=format&fit=crop&w=1600&q=80" },
+      { id: "interstellar", title: "Интерстелар", category: "Фантастика", rank: 3, rating: "8.7", year: "2014", duration: "2ч 49м", quality: "4K HDR", description: "Екип от смели изследователи предприема най-важната мисия в човешката история...", poster: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=500&q=80", backdrop: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1600&q=80" },
+      { id: "darkknight", title: "Черният рицар", category: "Екшън", rank: 4, rating: "9.0", year: "2008", duration: "2ч 32м", quality: "4K REMUX", description: "Батман срещу Жокера в Готъм Сити...", poster: "https://images.unsplash.com/photo-1509281373149-e957c6296406?auto=format&fit=crop&w=500&q=80", backdrop: "https://images.unsplash.com/photo-1509281373149-e957c6296406?auto=format&fit=crop&w=1600&q=80" },
+      { id: "gladiator", title: "Гладиатор", category: "Екшън", rank: 5, rating: "8.5", year: "2000", duration: "2ч 35м", quality: "1080p BluRay", description: "Бивш римски генерал търси отмъщение срещу корумпирания император...", poster: "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=500&q=80", backdrop: "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=1600&q=80" }
     ];
 
-    function init() {
+    let activeMovie = allMovies[0];
+
+    function renderUI() {
       const top10 = document.getElementById('top10-rail');
-      top10.innerHTML = movies.map(m => `
-        <div class="tv-focusable flex-shrink-0 flex items-center cursor-pointer" tabindex="0" onclick="openPlayer()">
+      top10.innerHTML = allMovies.map(m => `
+        <div class="tv-focusable flex-shrink-0 flex items-center cursor-pointer" tabindex="0" data-id="${m.id}" onclick="openPlayer('${m.id}')">
           <div class="rank-number -mr-8 z-10">${m.rank}</div>
-          <div class="w-44 aspect-[2/3] rounded-2xl overflow-hidden bg-slate-900 border border-white/10 relative">
+          <div class="w-44 aspect-[2/3] rounded-2xl overflow-hidden bg-slate-900 border border-white/10 relative shadow-2xl">
             <img src="${m.poster}" class="w-full h-full object-cover">
             <div class="absolute top-2 right-2 px-1.5 py-0.5 rounded bg-black/80 text-[10px] font-black text-amber-300">★ ${m.rating}</div>
+            <div class="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-purple-950/90 border border-purple-500/50 text-[9px] font-black text-purple-300">${m.quality}</div>
           </div>
         </div>
       `).join('');
+
+      const scifi = document.getElementById('scifi-rail');
+      scifi.innerHTML = allMovies.filter(m => m.category === 'Фантастика').map(m => renderCard(m)).join('');
+
+      const action = document.getElementById('action-rail');
+      action.innerHTML = allMovies.filter(m => m.category === 'Екшън').map(m => renderCard(m)).join('');
     }
 
-    function openPlayer() {
+    function renderCard(m) {
+      return `
+        <div class="tv-focusable flex-shrink-0 w-44 rounded-2xl overflow-hidden bg-slate-900 border border-white/10 cursor-pointer shadow-xl" tabindex="0" data-id="${m.id}" onclick="openPlayer('${m.id}')">
+          <div class="relative aspect-[2/3] w-full overflow-hidden bg-slate-800">
+            <img src="${m.poster}" class="w-full h-full object-cover">
+            <div class="absolute top-2 right-2 px-1.5 py-0.5 rounded bg-black/80 text-[10px] font-black text-amber-300">★ ${m.rating}</div>
+            <div class="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-purple-950/90 text-[9px] font-bold text-purple-300">${m.year}</div>
+          </div>
+          <div class="p-3 space-y-0.5">
+            <h3 class="text-xs font-bold text-white truncate">${m.title}</h3>
+            <p class="text-[10px] text-purple-400 font-semibold">${m.category}</p>
+          </div>
+        </div>
+      `;
+    }
+
+    function updateHero(m) {
+      activeMovie = m;
+      document.getElementById('hero-title').innerText = m.title;
+      document.getElementById('hero-description').innerText = m.description;
+      document.getElementById('hero-duration').innerText = m.duration;
+      document.getElementById('hero-quality').innerText = m.quality;
+      document.getElementById('hero-genre-badge').innerText = m.category;
+      document.getElementById('hero-backdrop').src = m.backdrop;
+    }
+
+    function openPlayer(id) {
+      const m = allMovies.find(item => item.id === id) || activeMovie;
+      updateHero(m);
+      document.getElementById('player-title').innerText = m.title;
       document.getElementById('player-modal').classList.remove('hidden');
-      const v = document.getElementById('tv-video');
-      v.src = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
-      v.play();
+
+      const video = document.getElementById('tv-video');
+      video.src = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
+      video.play();
+
+      const closeBtn = document.querySelector('#player-modal button');
+      if (closeBtn) focusElement(closeBtn);
+    }
+
+    function playActiveMovie() {
+      openPlayer(activeMovie.id);
     }
 
     function closePlayer() {
       document.getElementById('player-modal').classList.add('hidden');
-      document.getElementById('tv-video').pause();
+      const video = document.getElementById('tv-video');
+      video.pause();
+      focusElement(document.getElementById('btn-hero-play'));
+    }
+
+    function toggleVideoPlay() {
+      const v = document.getElementById('tv-video');
+      if (v.paused) v.play(); else v.pause();
+    }
+
+    function seekVideo(seconds) {
+      const v = document.getElementById('tv-video');
+      v.currentTime += seconds;
     }
 
     function filterByGenre(g) {
-      alert("Филтриране по категория: " + g);
+      if (g === 'Фантастика') scrollToSection('scifi-section');
+      else if (g === 'Екшън') scrollToSection('action-section');
+      else scrollToSection('top10-section');
     }
 
     function scrollToSection(id) {
-      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+      const el = document.getElementById(id);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const first = el.querySelector('.tv-focusable');
+        if (first) focusElement(first);
+      }
     }
 
-    init();
+    function focusElement(el) {
+      if (!el) return;
+      document.querySelectorAll('.focused').forEach(e => e.classList.remove('focused'));
+      el.classList.add('focused');
+      el.focus();
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+
+      const id = el.getAttribute('data-id');
+      if (id) {
+        const m = allMovies.find(item => item.id === id);
+        if (m) updateHero(m);
+      }
+    }
+
+    function navigate2D(direction) {
+      const isPlayerOpen = !document.getElementById('player-modal').classList.contains('hidden');
+      const container = isPlayerOpen ? document.getElementById('player-modal') : document.body;
+
+      const current = container.querySelector('.focused') || container.querySelector('.tv-focusable');
+      if (!current) {
+        const first = container.querySelector('.tv-focusable');
+        if (first) focusElement(first);
+        return;
+      }
+
+      const cRect = current.getBoundingClientRect();
+      const cX = cRect.left + cRect.width / 2;
+      const cY = cRect.top + cRect.height / 2;
+
+      const candidates = Array.from(container.querySelectorAll('.tv-focusable:not(.hidden)'))
+        .filter(el => el !== current && el.offsetParent !== null);
+
+      let bestCandidate = null;
+      let minDistance = Infinity;
+
+      for (const el of candidates) {
+        const r = el.getBoundingClientRect();
+        const eX = r.left + r.width / 2;
+        const eY = r.top + r.height / 2;
+
+        const dx = eX - cX;
+        const dy = eY - cY;
+
+        let isValid = false;
+        let penalty = 0;
+
+        if (direction === 'Right') {
+          isValid = dx > 10;
+          penalty = Math.abs(dy) * 3.0;
+        } else if (direction === 'Left') {
+          isValid = dx < -10;
+          penalty = Math.abs(dy) * 3.0;
+        } else if (direction === 'Down') {
+          isValid = dy > 10;
+          penalty = Math.abs(dx) * 1.5;
+        } else if (direction === 'Up') {
+          isValid = dy < -10;
+          penalty = Math.abs(dx) * 1.5;
+        }
+
+        if (isValid) {
+          const dist = Math.hypot(dx, dy) + penalty;
+          if (dist < minDistance) {
+            minDistance = dist;
+            bestCandidate = el;
+          }
+        }
+      }
+
+      if (bestCandidate) {
+        focusElement(bestCandidate);
+      }
+    }
+
+    window.handleTvRemote = function(action) {
+      const isPlayerOpen = !document.getElementById('player-modal').classList.contains('hidden');
+
+      if (action === 'Back') {
+        if (isPlayerOpen) {
+          closePlayer();
+          return;
+        }
+      }
+
+      if (action === 'Enter') {
+        const cur = document.querySelector('.focused');
+        if (cur) cur.click();
+        return;
+      }
+
+      if (['Up', 'Down', 'Left', 'Right'].includes(action)) {
+        navigate2D(action);
+      }
+    };
+
+    window.addEventListener('keydown', (e) => {
+      const map = {
+        'ArrowUp': 'Up',
+        'ArrowDown': 'Down',
+        'ArrowLeft': 'Left',
+        'ArrowRight': 'Right',
+        'Enter': 'Enter',
+        'Escape': 'Back',
+        'Backspace': 'Back'
+      };
+
+      if (map[e.key]) {
+        e.preventDefault();
+        window.handleTvRemote(map[e.key]);
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      renderUI();
+      setTimeout(() => {
+        focusElement(document.getElementById('btn-hero-play'));
+      }, 200);
+
+      const clockEl = document.getElementById('clock');
+      function tick() {
+        const d = new Date();
+        clockEl.innerText = d.toLocaleTimeString('bg-BG', { hour: '2-digit', minute: '2-digit' });
+      }
+      tick();
+      setInterval(tick, 30000);
+    });
   </script>
 </body>
 </html>
